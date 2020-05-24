@@ -1,0 +1,2 @@
+/usr/bin/ar qc ../../devel/lib/libcurb_detect_lib.a  CMakeFiles/curb_detect_lib.dir/curb_detect/grid_map.cpp.o
+/usr/bin/ranlib ../../devel/lib/libcurb_detect_lib.a

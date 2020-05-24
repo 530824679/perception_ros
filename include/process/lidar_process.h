@@ -59,6 +59,7 @@ as well as in the event of applications for industrial property rights.
 #include <chrono>
 
 // local include
+#include "roi_filter/roi_filter.h"
 #include "calibration/calibrate.h"
 #include "curb_detect/grid_map.h"
 #include "common/pcl_types.h"
@@ -71,10 +72,14 @@ public:
 
     bool Init(std::string &config_path);
 
-    void ProcessLidarData(const pcl_util::VPointCloudPtr in_cloud_ptr);
+    void ProcessLidarData(const pcl_util::VPointCloudPtr &in_cloud_ptr);
 
 private:
-    // sub module ptr
+    void ProcessPointCloud(const pcl_util::VPointCloudPtr &in_cloud_ptr);
+
+private:
+    // Sub module ptr
+    std::shared_ptr<ROIFilter> roi_filter_;
     std::shared_ptr<Calibrate> calibrate_;
     std::shared_ptr<GridMap> grid_map_;
 
@@ -82,6 +87,10 @@ private:
     pcl_util::VPointCloudPtr filtered_cloud_ptr_;
     pcl_util::VPointCloudPtr filtered_cloud_objects_ptr_;
     pcl_util::VPointCloudPtr filtered_cloud_ground_ptr_;
+
+    // Markers for visualization
+    visualization_msgs::Marker bbox_list_;
+    visualization_msgs::MarkerArray velocity_list_;
 
     // Subscriber
     ros::Subscriber lidar_subscriber_;
@@ -92,8 +101,8 @@ private:
     ros::Publisher filtered_cloud_objects_publisher_;
 
     // Marker publisher
-    ros::Publisher lidar_bbox_publisher_;
-    ros::Publisher lidar_velocity_publisher_;
+    ros::Publisher bbox_publisher_;
+    ros::Publisher velocity_publisher_;
 
 };
 

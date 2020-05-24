@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/chenwei/perception_ros/cmake-build-debug/devel/setup.sh

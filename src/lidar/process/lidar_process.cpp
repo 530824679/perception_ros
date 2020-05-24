@@ -6,6 +6,21 @@ LidarProcess::LidarProcess(ros::NodeHandle node, std::string config_path){
     // Initialze Config Params
     Init(config_path);
 
+    // Initialize visualization marker vector
+    bbox_list_.header.frame_id = 0;
+    bbox_list_.ns = "bbox line list";
+    bbox_list_.action = visualization_msgs::Marker::ADD;
+    bbox_list_.pose.orientation.w = 1.0;
+    bbox_list_.id = 1;
+    bbox_list_.type = visualization_msgs::Marker::LINE_LIST;
+    bbox_list_.scale.x = 0.1;
+    if (true) {
+        bbox_list_.color.r = 1.0;
+        bbox_list_.color.g = 0.0;
+        bbox_list_.color.b = 0.0;
+        bbox_list_.color.a = 1.0;
+    }
+
     // Initialize Point Cloud Pointers
     filtered_cloud_ground_ptr_.reset(new pcl_util::VPointCloud);
     filtered_cloud_objects_ptr_.reset(new pcl_util::VPointCloud);
@@ -18,8 +33,8 @@ LidarProcess::LidarProcess(ros::NodeHandle node, std::string config_path){
     filtered_cloud_publisher_ = node.advertise<pcl_util::VPointCloud>("lidar_filtered", 1);
     filtered_cloud_objects_publisher_ = node.advertise<pcl_util::VPointCloud>("lidar_filtered_objects", 1);
     filtered_cloud_ground_publisher_ = node.advertise<pcl_util::VPointCloud>("lidar_filtered_ground", 1);
-    lidar_bbox_publisher_ = node.advertise<visualization_msgs::Marker>("lidar_bbox_marker", 1);
-    lidar_velocity_publisher_ = node.advertise<visualization_msgs::MarkerArray>("lidar_velocity_marker", 1);
+    bbox_publisher_ = node.advertise<visualization_msgs::Marker>("lidar_bbox_marker", 1);
+    velocity_publisher_ = node.advertise<visualization_msgs::MarkerArray>("lidar_velocity_marker", 1);
 
 }
 
@@ -37,6 +52,14 @@ bool LidarProcess::Init(std::string &config_path) {
     Json::Value root;
     Json::Reader reader;
     if (reader.parse(file, root)){
+        // roi_filter
+        std::string roi_filter_config = "roi_filter";
+        roi_filter_ = std::make_shared<ROIFilter>();
+        if (!roi_filter_->Init(root, roi_filter_config)){
+            ROS_WARN("Init roi_filter failed.");
+        }
+        ROS_INFO("Init successfully, roi_filter.");
+
         // calibrate
         std::string calibrate_config = "calibrate";
         calibrate_ = std::make_shared<Calibrate>();
@@ -60,17 +83,42 @@ bool LidarProcess::Init(std::string &config_path) {
     }
 }
 
-void LidarProcess::ProcessLidarData(const pcl_util::VPointCloudPtr in_cloud_ptr) {
-    std::cout << "start call back" << std::endl;
+void LidarProcess::ProcessLidarData(const pcl_util::VPointCloudPtr &in_cloud_ptr) {
+    filtered_cloud_ptr_.reset(new pcl_util::VPointCloud);
+    filtered_cloud_objects_ptr_.reset(new pcl_util::VPointCloud);
+    filtered_cloud_ground_ptr_.reset(new pcl_util::VPointCloud);
 
-    PointXYZ out_point_cloud_;
-    out_point_cloud_.header.stamp = in_cloud_ptr->header.stamp;
-    out_point_cloud_.header.frame_id = in_cloud_ptr->header.frame_id;
+    filtered_cloud_ptr_->header.stamp = in_cloud_ptr->header.stamp;
+    filtered_cloud_ptr_->header.frame_id = in_cloud_ptr->header.frame_id;
+    filtered_cloud_ground_ptr_->header.stamp = in_cloud_ptr->header.stamp;
+    filtered_cloud_ground_ptr_->header.frame_id = in_cloud_ptr->header.frame_id;
+    filtered_cloud_objects_ptr_->header.stamp = in_cloud_ptr->header.stamp;
+    filtered_cloud_objects_ptr_->header.frame_id = in_cloud_ptr->header.frame_id;
+
+    bbox_list_.header.stamp = pcl_conversions::fromPCL(in_cloud_ptr->header.stamp);
+    bbox_list_.points.clear();
+    bbox_list_.colors.clear();
+    velocity_list_.markers.clear();
+
+    ProcessPointCloud(in_cloud_ptr);
+
+    filtered_cloud_publisher_.publish(filtered_cloud_ptr_);
+    filtered_cloud_objects_publisher_.publish(filtered_cloud_objects_ptr_);
+    filtered_cloud_ground_publisher_.publish(filtered_cloud_ground_ptr_);
+    bbox_publisher_.publish(bbox_list_);
+    velocity_publisher_.publish(velocity_list_);
+
+    return;
+}
+
+void LidarProcess::ProcessPointCloud(const pcl_util::VPointCloudPtr &in_cloud_ptr){
+
+    // -------------------------------------//
+    // ------------- Calibrate -------------//
+    // -------------------------------------//
 
 
-    // set the exact point cloud size -- the vectors should already have enough space
-    size_t num_points = in_cloud_ptr->size();
-    out_point_cloud_.points.resize(num_points);
+
 
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr out_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
@@ -98,5 +146,4 @@ void LidarProcess::ProcessLidarData(const pcl_util::VPointCloudPtr in_cloud_ptr)
     out_publisher_.publish(out_point_cloud_);
 
     std::cout << "end call back" << std::endl;
-
 }
