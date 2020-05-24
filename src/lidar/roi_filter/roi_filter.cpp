@@ -58,5 +58,10 @@ bool ROIFilter::Init(Json::Value params, std::string key){
     }
 }
 
+void ROIFilter::FilterROI(const pcl_util::VPointCloudPtr &in_cloud_ptr){
+    filtered_cloud_all_ptr_.reset(new pcl_util::VPointCloud(*in_cloud_ptr));
 
+
+
+}
 

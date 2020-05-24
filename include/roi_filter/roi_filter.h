@@ -39,6 +39,9 @@ private:
     double roi_y_max_;
     double roi_z_min_;
     double roi_z_max_;
+
+    pcl_util::VPointCloudPtr filtered_cloud_all_ptr_;
+    pcl_util::PointIndicesPtr filtered_cloud_indices_ptr_;
 };
 
 #endif //PERCEPTION_ROS_ROI_FILTER_H
