@@ -44,9 +44,8 @@ public:
 
     float Min(float x, float y);
     float Max(float x, float y);
-    void passThrough(const pcl_util::VPointCloudConstPtr in_cloud_ptr,
-                     pcl_util::VPointCloudPtr &out_cloud_ptr);
-    void ConstructGridMap(pcl_util::VPointCloudPtr in_cloud_ptr, pcl_util::VPointCloudPtr out_cloud_ptr, size_t &result_count);
+
+    void ConstructGridMap(pcl_util::VPointCloudPtr in_cloud_ptr, pcl_util::VPointCloudPtr out_cloud_ptr);
 private:
     int column_;
     int row_;

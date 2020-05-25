@@ -46,8 +46,7 @@ add_subdirectory(src/lidar)
 
 add_executable(${PROJECT_NAME}_node src/perception_node.cpp)
 target_link_libraries(${PROJECT_NAME}_node
+    lidar_perception_lib
     ${catkin_LIBRARIES}
     ${PCL_LIBRARIES}
-    lidar_perception_lib
-
 )

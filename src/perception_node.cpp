@@ -25,7 +25,7 @@ int main(int argc, char **argv)
         ros::init(argc, argv, "perception_node");
         ros::NodeHandle nh;
 
-        perception::LidarProcess node(nh, "/HDD_Disk/perception_ros/config/perception_params.json");
+        LidarProcess node(nh, "/HDD_Disk/perception_ros/config/perception_params.json");
 
         ROS_INFO("Start Perception ROS loop\n");
 

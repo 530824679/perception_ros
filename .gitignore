@@ -1,2 +1,23 @@
+# ignore mac os system file
+*.DS_Store
+
+# ignore vs code file
+.vscode/
+
+# ignore vim .swp file
+*.swp
+
+# ignore recorded .bag files
+*.bag
+
+# ignore PyCharm project files
+*.idea
+
+# ignore python binary
+*.pyc
+
+# ignore cmake debug
 cmake-build-debug/*
-.idea/*
+
+# ignore cmake release
+cmake-build-release/*

@@ -54,19 +54,7 @@ float GridMap::Max(float x, float y){
     return (x) > (y) ? (x) : (y);
 }
 
-void GridMap::passThrough(const pcl_util::VPointCloudConstPtr in_cloud_ptr, pcl_util::VPointCloudPtr &out_cloud_ptr){
-    pcl::PassThrough<pcl_util::VPoint> pass;
-
-    pass.setInputCloud(in_cloud_ptr);
-    pass.setFilterFieldName("z");
-    pass.setFilterLimits(-1, 2);
-    pass.filter(*out_cloud_ptr);
-}
-
-void GridMap::ConstructGridMap(pcl_util::VPointCloudPtr in_cloud_ptr, pcl_util::VPointCloudPtr out_cloud_ptr, size_t &result_count) {
-    //pcl::PointCloud<pcl::PointXYZ>::Ptr in_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
-    //passThrough(pass_cloud_ptr, in_cloud_ptr);
-
+void GridMap::ConstructGridMap(pcl_util::VPointCloudPtr in_cloud_ptr, pcl_util::VPointCloudPtr out_cloud_ptr) {
     float min_height[row_][column_] = {0};
     float max_height[row_][column_] = {0};
     bool init[row_][column_] = {false};
@@ -86,6 +74,8 @@ void GridMap::ConstructGridMap(pcl_util::VPointCloudPtr in_cloud_ptr, pcl_util::
         }
     }
 
+
+    int result_count = 0;
     for (unsigned int i = 0; i < in_cloud_ptr->points.size(); ++i){
         int x_grid = floor(double(in_cloud_ptr->points[i].x) / grid_size_);
         int y_grid = floor(double(in_cloud_ptr->points[i].y) / grid_size_);

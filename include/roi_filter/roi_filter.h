@@ -32,7 +32,20 @@ public:
 
     bool Init(Json::Value params, std::string key);
 
+    bool Filter(const pcl_util::VPointCloudPtr &in_cloud_ptr, pcl_util::VPointCloudPtr &filtered_cloud_all_ptr);
+    void FilterROI(const pcl_util::VPointCloudPtr &in_cloud_ptr);
+
 private:
+<<<<<<< HEAD
+    float roi_x_min_;
+    float roi_x_max_;
+    float roi_y_min_;
+    float roi_y_max_;
+    float roi_z_min_;
+    float roi_z_max_;
+
+    pcl_util::VPointCloudPtr filtered_cloud_all_ptr_;
+=======
     double roi_x_min_;
     double roi_x_max_;
     double roi_y_min_;
@@ -42,6 +55,7 @@ private:
 
     pcl_util::VPointCloudPtr filtered_cloud_all_ptr_;
     pcl_util::PointIndicesPtr filtered_cloud_indices_ptr_;
+>>>>>>> origin/master
 };
 
 #endif //PERCEPTION_ROS_ROI_FILTER_H

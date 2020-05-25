@@ -7,7 +7,7 @@ LidarProcess::LidarProcess(ros::NodeHandle node, std::string config_path){
     Init(config_path);
 
     // Initialize visualization marker vector
-    bbox_list_.header.frame_id = 0;
+    bbox_list_.header.frame_id = "0";
     bbox_list_.ns = "bbox line list";
     bbox_list_.action = visualization_msgs::Marker::ADD;
     bbox_list_.pose.orientation.w = 1.0;
@@ -112,38 +112,13 @@ void LidarProcess::ProcessLidarData(const pcl_util::VPointCloudPtr &in_cloud_ptr
 }
 
 void LidarProcess::ProcessPointCloud(const pcl_util::VPointCloudPtr &in_cloud_ptr){
+    pcl_util::VPointCloudPtr filter_cloud_all_ptr(new pcl_util::VPointCloud());
+    roi_filter_->Filter(in_cloud_ptr, filter_cloud_all_ptr);
 
-    // -------------------------------------//
-    // ------------- Calibrate -------------//
-    // -------------------------------------//
-
-
-
-
-
-    pcl::PointCloud<pcl::PointXYZ>::Ptr out_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
-
-    calibrate_round_.Correct(in_cloud_ptr, out_cloud_ptr);
-
-    std::cout << out_cloud_ptr->size() << std::endl;
-
-    pcl::PointCloud<pcl::PointXYZ>::Ptr object_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
-    size_t result_count = 0;
-    grid_map_.ConstructGridMap(out_cloud_ptr, object_cloud_ptr, result_count);
-    //out_point_cloud_.resize(result_count);
-
-
-    //基于半径的离群点剔除
-    pcl::RadiusOutlierRemoval<pcl::PointXYZ>  rout;
-    rout.setInputCloud(object_cloud_ptr);
-    rout.setRadiusSearch(0.8);
-    rout.setMinNeighborsInRadius(2);
-    rout.filter(out_point_cloud_);
+    grid_map_->ConstructGridMap(filter_cloud_all_ptr, filtered_cloud_ptr_);
 
 
 
 
-    out_publisher_.publish(out_point_cloud_);
 
-    std::cout << "end call back" << std::endl;
 }
