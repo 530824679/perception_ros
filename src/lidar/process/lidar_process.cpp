@@ -115,6 +115,7 @@ void LidarProcess::ProcessPointCloud(const pcl_util::VPointCloudPtr &in_cloud_pt
     pcl_util::VPointCloudPtr filter_cloud_all_ptr(new pcl_util::VPointCloud());
     roi_filter_->Filter(in_cloud_ptr, filter_cloud_all_ptr);
 
+
     grid_map_->ConstructGridMap(filter_cloud_all_ptr, filtered_cloud_ptr_);
 
 
