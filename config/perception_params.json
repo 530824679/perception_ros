@@ -1,11 +1,11 @@
 {
   "roi_filter" : {
     "roi_x_min": 0,
-    "roi_x_max": 60,
+    "roi_x_max": 40,
     "roi_y_min": -10,
     "roi_y_max": 10,
     "roi_z_min": -0.5,
-    "roi_z_max": 5
+    "roi_z_max": 4
   },
   "calibrate" : {
     "x_min": 1.0,
@@ -16,9 +16,16 @@
     "z_max": 0.1
   },
   "curb_detect" : {
+
+  },
+  "segmentation" : {
     "column": 200,
-    "row": 600,
+    "row": 400,
     "size": 0.1,
-    "threshold": 0.1
+    "threshold": 0.08,
+    "abs_height": 0.1,
+    "threads_num": 4,
+    "seg_distance": [10, 20, 30],
+    "cluster_scale": [0.4, 0.6, 0.8, 1.0]
   }
 }

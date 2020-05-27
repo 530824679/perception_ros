@@ -98,10 +98,10 @@ Eigen::MatrixXf Calibrate::EstimateGroundPlane(const pcl_util::VPointCloudPtr in
     plane_seg.setInputCloud(in_cloud_ptr);
     plane_seg.segment(*Plane_inliers, *plane_coefficients);
 
-    std::cout << "Model coefficeients:" << plane_coefficients->values[0] << " "
-              << plane_coefficients->values[1] << " "
-              << plane_coefficients->values[2] << " "
-              << plane_coefficients->values[3] << std::endl;
+//    std::cout << "Model coefficeients:" << plane_coefficients->values[0] << " "
+//              << plane_coefficients->values[1] << " "
+//              << plane_coefficients->values[2] << " "
+//              << plane_coefficients->values[3] << std::endl;
 
     Eigen::Vector3f normal_vector(plane_coefficients->values[0], plane_coefficients->values[1], plane_coefficients->values[2]);
     return normal_vector;

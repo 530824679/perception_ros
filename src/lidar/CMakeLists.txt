@@ -12,8 +12,16 @@ target_link_libraries(calibration_lib
 
 ########## curb_detect_lib ##########
 add_library(curb_detect_lib STATIC
-        ${PROJECT_SOURCE_DIR}/src/lidar/curb_detect/grid_map.cpp)
+        ${PROJECT_SOURCE_DIR}/src/lidar/curb_detect/curb_detect.cpp
+        ${PROJECT_SOURCE_DIR}/src/lidar/curb_detect/curb_track.cpp)
 target_link_libraries(curb_detect_lib
+        ${PCL_LIBRARIES})
+
+########## segmentation lib ##########
+add_library(segmentation_lib STATIC
+        ${PROJECT_SOURCE_DIR}/src/lidar/sementation/grid_map.cpp
+        ${PROJECT_SOURCE_DIR}/src/lidar/sementation/object_cluster.cpp)
+target_link_libraries(segmentation_lib
         ${PCL_LIBRARIES})
 
 ########## object_detect_lib ##########
@@ -43,4 +51,5 @@ target_link_libraries(lidar_perception_lib
         ${PCL_LIBRARIES}
         roi_filter_lib
         calibration_lib
-        curb_detect_lib)
+        curb_detect_lib
+        segmentation_lib)

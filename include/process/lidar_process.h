@@ -61,7 +61,8 @@ as well as in the event of applications for industrial property rights.
 // local include
 #include "roi_filter/roi_filter.h"
 #include "calibration/calibrate.h"
-#include "curb_detect/grid_map.h"
+#include "curb_detect/curb_detect.h"
+#include "segmentation/object_cluster.h"
 #include "common/pcl_types.h"
 
 class LidarProcess {
@@ -81,7 +82,7 @@ private:
     // Sub module ptr
     std::shared_ptr<ROIFilter> roi_filter_;
     std::shared_ptr<Calibrate> calibrate_;
-    std::shared_ptr<GridMap> grid_map_;
+    std::shared_ptr<Segment> object_segment_;
 
     // Point clouds
     pcl_util::VPointCloudPtr filtered_cloud_ptr_;

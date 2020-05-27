@@ -35,6 +35,10 @@ namespace pcl_util{
     typedef pcl::PointIndices PointIndices;
     typedef pcl::PointIndices::Ptr PointIndicesPtr;
 
+    //typedef pcl::ExtractIndices<Point> ExtractIndices;
+    //typedef pcl::ExtractIndices<VPoint> VExtractIndices;
+    //typedef pcl::ExtractIndices<CPoint> CExtractIndices;
+
     typedef pcl::KdTreeFLANN<Point> KdTree;
 
     struct BoundingCube{

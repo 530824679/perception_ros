@@ -7,7 +7,7 @@ LidarProcess::LidarProcess(ros::NodeHandle node, std::string config_path){
     Init(config_path);
 
     // Initialize visualization marker vector
-    bbox_list_.header.frame_id = "0";
+    bbox_list_.header.frame_id = "livox_frame";
     bbox_list_.ns = "bbox line list";
     bbox_list_.action = visualization_msgs::Marker::ADD;
     bbox_list_.pose.orientation.w = 1.0;
@@ -68,13 +68,13 @@ bool LidarProcess::Init(std::string &config_path) {
         }
         ROS_INFO("Init successfully, calibrate.");
 
-        // curb detect
-        std::string curb_detect_config = "curb_detect";
-        grid_map_ = std::make_shared<GridMap>();
-        if (!grid_map_->Init(root, curb_detect_config)){
-            ROS_WARN("Init curb detect failed.");
+        // segmentation
+        std::string segmentation_config = "segmentation";
+        object_segment_ = std::make_shared<Segment>();
+        if (!object_segment_->Init(root, segmentation_config)){
+            ROS_WARN("Init segment object failed.");
         }
-        ROS_INFO("Init successfully, curb detect.");
+        ROS_INFO("Init successfully, segment object.");
 
         return true;
     }else{
@@ -115,11 +115,9 @@ void LidarProcess::ProcessPointCloud(const pcl_util::VPointCloudPtr &in_cloud_pt
     pcl_util::VPointCloudPtr filter_cloud_all_ptr(new pcl_util::VPointCloud());
     roi_filter_->Filter(in_cloud_ptr, filter_cloud_all_ptr);
 
+    pcl_util::VPointCloudPtr calibrate_cloud_all_ptr(new pcl_util::VPointCloud());
+    calibrate_->Correct(filter_cloud_all_ptr, calibrate_cloud_all_ptr);
 
-    grid_map_->ConstructGridMap(filter_cloud_all_ptr, filtered_cloud_ptr_);
-
-
-
-
+    object_segment_->Process(filter_cloud_all_ptr, filtered_cloud_ptr_);
 
 }
