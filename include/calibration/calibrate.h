@@ -40,7 +40,10 @@ as well as in the event of applications for industrial property rights.
 #include <jsoncpp/json/json.h>
 
 // local include
+#include "common/logging.h"
 #include "common/pcl_types.h"
+
+extern Logging logger;
 
 class Calibrate {
 public:

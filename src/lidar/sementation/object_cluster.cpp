@@ -18,42 +18,49 @@ bool Segment::Init(Json::Value params, std::string key){
         if (segmentation_param.isMember("column") && segmentation_param["column"].isInt()) {
             column = segmentation_param["column"].asInt();
         } else {
-            std::cout << "Has not key named column in the curb detect config" << std::endl;
+            logger.Log(ERROR, "[%s]: Has not key named column in the segmentation config.\n", __func__);
             return false;
         }
 
         if (segmentation_param.isMember("row") && segmentation_param["row"].isInt()) {
             row = segmentation_param["row"].asInt();
         } else {
-            std::cout << "Has not key named row in the curb detect config" << std::endl;
+            logger.Log(ERROR, "[%s]: Has not key named row in the segmentation config.\n", __func__);
             return false;
         }
 
         if (segmentation_param.isMember("size") && segmentation_param["size"].isDouble()) {
             grid_size = segmentation_param["size"].asFloat();
         } else {
-            std::cout << "Has not key named size in the curb detect config" << std::endl;
+            logger.Log(ERROR, "[%s]: Has not key named size in the segmentation config.\n", __func__);
             return false;
         }
 
         if (segmentation_param.isMember("threshold") && segmentation_param["threshold"].isDouble()) {
             height_threshold = segmentation_param["threshold"].asFloat();
         } else {
-            std::cout << "Has not key named threshold in the curb detect config" << std::endl;
+            logger.Log(ERROR, "[%s]: Has not key named threshold in the segmentation config.\n", __func__);
             return false;
         }
 
         if (segmentation_param.isMember("abs_height") && segmentation_param["abs_height"].isDouble()) {
             absolute_height = segmentation_param["abs_height"].asFloat();
         } else {
-            std::cout << "Has not key named absolute_height in the curb detect config" << std::endl;
+            logger.Log(ERROR, "[%s]: Has not key named absolute_height in the segmentation config.\n", __func__);
             return false;
         }
 
-        if (segmentation_param.isMember("threads_num") && segmentation_param["threads_num"].isInt()) {
-            threads_num_ = segmentation_param["threads_num"].asInt();
+        if (segmentation_param.isMember("min_cluster_size") && segmentation_param["min_cluster_size"].isInt()) {
+            min_cluster_size_ = segmentation_param["min_cluster_size"].asInt();
         } else {
-            std::cout << "Has not key named threads_num in the curb detect config" << std::endl;
+            logger.Log(ERROR, "[%s]: Has not key named min_cluster_size in the segmentation config.\n", __func__);
+            return false;
+        }
+
+        if (segmentation_param.isMember("max_cluster_size") && segmentation_param["max_cluster_size"].isInt()) {
+            max_cluster_size_ = segmentation_param["max_cluster_size"].asInt();
+        } else {
+            logger.Log(ERROR, "[%s]: Has not key named max_cluster_size_ in the segmentation config.\n", __func__);
             return false;
         }
 
@@ -63,7 +70,7 @@ bool Segment::Init(Json::Value params, std::string key){
                 seg_distance_.push_back(segmentation_param["seg_distance"][i].asFloat());
             }
         } else {
-            std::cout << "Has not key named seg_distance in the curb detect config" << std::endl;
+            logger.Log(ERROR, "[%s]: Has not key named seg_distance in the segmentation config.\n", __func__);
             return false;
         }
 
@@ -73,25 +80,26 @@ bool Segment::Init(Json::Value params, std::string key){
                 cluster_scale_.push_back(segmentation_param["cluster_scale"][i].asFloat());
             }
         } else {
-            std::cout << "Has not key named isArray in the curb detect config" << std::endl;
+            logger.Log(ERROR, "[%s]: Has not key named isArray in the segmentation config.\n", __func__);
             return false;
         }
 
         // set grid map params
         grid_map_ = std::make_shared<GridMap>();
         grid_map_->SetParams(column, row, grid_size, height_threshold, absolute_height);
+
     }else{
-        std::cout << "Has not key named curb_detect in the perception config" << std::endl;
+        logger.Log(ERROR, "[%s]: Has not key named segmentation in the perception config.\n", __func__);
     }
 }
 
-void Segment::Cluster(pcl_util::VPointCloudPtr &in_cloud_ptr) {
+void Segment::Cluster(pcl_util::VPointCloudPtr &in_cloud_ptr, std::vector<pcl_util::VPointCloud> &object_cloud) {
     size_t segment_size = cluster_scale_.size();
     std::vector<pcl_util::VPointCloudPtr> segment_array(segment_size);
 
 #pragma omp for
     for (size_t i = 0; i < segment_array.size(); i++) {
-        pcl::PointCloud<pcl::PointXYZ>::Ptr tmp(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl_util::VPointCloudPtr tmp(new pcl_util::VPointCloud);
         segment_array[i] = tmp;
     }
 
@@ -123,12 +131,12 @@ void Segment::Cluster(pcl_util::VPointCloudPtr &in_cloud_ptr) {
 
 #pragma omp for
     for (size_t i = 0; i < segment_array.size(); i++){
-        ClusterObject(segment_array[i], cluster_scale_[i]);
+        ClusterObject(segment_array[i], cluster_scale_[i], object_cloud);
     }
 
 }
 
-void Segment::ClusterObject(pcl_util::VPointCloudPtr &in_cloud_ptr, double max_cluster_distance){
+void Segment::ClusterObject(pcl_util::VPointCloudPtr &in_cloud_ptr, double max_cluster_distance, std::vector<pcl_util::VPointCloud> &object_cloud){
     pcl::search::KdTree<pcl_util::VPoint>::Ptr tree(new pcl::search::KdTree<pcl_util::VPoint>);
 
     pcl_util::VPointCloudPtr cloud_2d(new pcl_util::VPointCloud);
@@ -144,14 +152,22 @@ void Segment::ClusterObject(pcl_util::VPointCloudPtr &in_cloud_ptr, double max_c
 
     std::vector<pcl::PointIndices> local_indices;
 
-    pcl::EuclideanClusterExtraction<pcl_util::VPoint> euclid;
-    euclid.setInputCloud(cloud_2d);
-    euclid.setClusterTolerance(max_cluster_distance);
-    euclid.setMinClusterSize(MIN_CLUSTER_SIZE);
-    euclid.setMaxClusterSize(MAX_CLUSTER_SIZE);
-    euclid.setSearchMethod(tree);
-    euclid.extract(local_indices);
+    pcl::EuclideanClusterExtraction<pcl_util::VPoint> euclidean;
+    euclidean.setInputCloud(cloud_2d);
+    euclidean.setClusterTolerance(max_cluster_distance);
+    euclidean.setMinClusterSize(min_cluster_size_);
+    euclidean.setMaxClusterSize(max_cluster_size_);
+    euclidean.setSearchMethod(tree);
+    euclidean.extract(local_indices);
 
+#pragma omp for
+    for (size_t i = 0; i < local_indices.size(); i++){
+        pcl_util::VPointCloud cloud;
+        for (auto pit = local_indices[i].indices.begin(); pit != local_indices[i].indices.end(); ++pit) {
+            cloud.push_back(in_cloud_ptr->points[*pit]);
+        }
+        object_cloud.push_back(cloud);
+    }
 }
 
 void Segment::Process(pcl_util::VPointCloudPtr &in_cloud_ptr, pcl_util::VPointCloudPtr &out_cloud_ptr){
@@ -159,6 +175,11 @@ void Segment::Process(pcl_util::VPointCloudPtr &in_cloud_ptr, pcl_util::VPointCl
     pcl_util::VPointCloudPtr object_cloud_ptr(new pcl_util::VPointCloud());
     grid_map_->ConstructGridMap(in_cloud_ptr, ground_cloud_ptr, out_cloud_ptr);
 
-    Cluster(out_cloud_ptr);
+    //std::vector<pcl_util::VPointCloud> object_point_cloud;
+    //Cluster(out_cloud_ptr, object_point_cloud);
+
+
+
+
 
 }

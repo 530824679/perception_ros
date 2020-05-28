@@ -32,6 +32,9 @@ as well as in the event of applications for industrial property rights.
 
 // local include
 #include "grid_map.h"
+#include "common/logging.h"
+
+extern Logging logger;
 
 class Segment{
 public:
@@ -39,8 +42,8 @@ public:
     ~Segment();
 
     bool Init(Json::Value params, std::string key);
-    void Cluster(pcl_util::VPointCloudPtr &in_cloud_ptr);
-    void ClusterObject(pcl_util::VPointCloudPtr &in_cloud_ptr, double max_cluster_distance);
+    void Cluster(pcl_util::VPointCloudPtr &in_cloud_ptr, std::vector<pcl_util::VPointCloud> &object_cloud);
+    void ClusterObject(pcl_util::VPointCloudPtr &in_cloud_ptr, double max_cluster_distance, std::vector<pcl_util::VPointCloud> &object_cloud);
     void Process(pcl_util::VPointCloudPtr &in_cloud_ptr, pcl_util::VPointCloudPtr &out_cloud_ptr);
 
 private:
@@ -48,7 +51,8 @@ private:
 
     std::vector<float> seg_distance_;
     std::vector<float> cluster_scale_;
-    int threads_num_;
+    int min_cluster_size_;
+    int max_cluster_size_;
 };
 
 #endif //PERCEPTION_ROS_OBJECT_CLUSTER_H

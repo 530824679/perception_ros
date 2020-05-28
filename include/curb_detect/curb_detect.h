@@ -20,7 +20,11 @@ as well as in the event of applications for industrial property rights.
 #ifndef PERCEPTION_ROS_CURB_DETECT_H
 #define PERCEPTION_ROS_CURB_DETECT_H
 
+// local include
 #include "segmentation/grid_map.h"
+#include "common/logging.h"
+
+extern Logging logger;
 
 class CurbDetect{
 public:

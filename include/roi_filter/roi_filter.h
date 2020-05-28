@@ -24,6 +24,9 @@ as well as in the event of applications for industrial property rights.
 
 // local include
 #include "common/pcl_types.h"
+#include "common/logging.h"
+
+extern Logging logger;
 
 class ROIFilter {
 public:

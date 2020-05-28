@@ -64,6 +64,9 @@ as well as in the event of applications for industrial property rights.
 #include "curb_detect/curb_detect.h"
 #include "segmentation/object_cluster.h"
 #include "common/pcl_types.h"
+#include "common/logging.h"
+
+extern Logging logger;
 
 class LidarProcess {
 

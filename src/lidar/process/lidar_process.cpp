@@ -45,7 +45,7 @@ LidarProcess::~LidarProcess(){
 bool LidarProcess::Init(std::string &config_path) {
     std::ifstream file(config_path, std::ios::binary);
     if (!file.is_open()){
-        std::cout << "Error opening file." << std::endl;
+        logger.Log(ERROR, "[%s]: Error opening file.\n", __func__);
         return false;
     }
 
@@ -56,29 +56,29 @@ bool LidarProcess::Init(std::string &config_path) {
         std::string roi_filter_config = "roi_filter";
         roi_filter_ = std::make_shared<ROIFilter>();
         if (!roi_filter_->Init(root, roi_filter_config)){
-            ROS_WARN("Init roi_filter failed.");
+            logger.Log(WARNING, "[%s]: Init roi_filter failed.\n", __func__);
         }
-        ROS_INFO("Init successfully, roi_filter.");
+        logger.Log(INFO, "[%s]: Init successfully, roi_filter.\n", __func__);
 
         // calibrate
         std::string calibrate_config = "calibrate";
         calibrate_ = std::make_shared<Calibrate>();
         if (!calibrate_->Init(root, calibrate_config)){
-            ROS_WARN("Init calibrate failed.");
+            logger.Log(WARNING, "[%s]: Init calibrate failed.\n", __func__);
         }
-        ROS_INFO("Init successfully, calibrate.");
+        logger.Log(INFO, "[%s]: Init successfully, calibrate.\n", __func__);
 
         // segmentation
         std::string segmentation_config = "segmentation";
         object_segment_ = std::make_shared<Segment>();
         if (!object_segment_->Init(root, segmentation_config)){
-            ROS_WARN("Init segment object failed.");
+            logger.Log(WARNING, "[%s]: Init segment object failed.\n", __func__);
         }
-        ROS_INFO("Init successfully, segment object.");
+        logger.Log(INFO, "[%s]: Init successfully, segment object.\n", __func__);
 
         return true;
     }else{
-        std::cout << "Parse error." << std::endl;
+        logger.Log(ERROR, "[%s]: Parse error.\n", __func__);
         return false;
     }
 }
@@ -112,6 +112,8 @@ void LidarProcess::ProcessLidarData(const pcl_util::VPointCloudPtr &in_cloud_ptr
 }
 
 void LidarProcess::ProcessPointCloud(const pcl_util::VPointCloudPtr &in_cloud_ptr){
+    std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
+
     pcl_util::VPointCloudPtr filter_cloud_all_ptr(new pcl_util::VPointCloud());
     roi_filter_->Filter(in_cloud_ptr, filter_cloud_all_ptr);
 
@@ -120,4 +122,7 @@ void LidarProcess::ProcessPointCloud(const pcl_util::VPointCloudPtr &in_cloud_pt
 
     object_segment_->Process(filter_cloud_all_ptr, filtered_cloud_ptr_);
 
+    std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> fp_ms = end - start;
+    std::cout << "Done! Took " << fp_ms.count() << "ms\n";
 }

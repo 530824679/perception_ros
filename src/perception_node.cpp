@@ -32,18 +32,18 @@ int main(int argc, char **argv)
 
         LidarProcess node(nh, "/HDD_Disk/perception_ros/config/perception_params.json");
 
-        ROS_INFO("Start Perception ROS loop\n");
+        logger.Log(INFO, "[%s]: Start Perception ROS loop.\n", __func__);
 
         ros::spin();
     }
     catch (std::exception& e)
     {
-        std::cerr << __FILE__ << ":" << __LINE__ << ":" << std::endl << "EXCEPTION '" << e.what() << "'" << std::endl;
+        logger.Log(ERROR, "[%s]: EXCEPTION '[%d]'.\n", __func__, e.what());
         return 1;
     }
     catch (...)
     {
-        std::cerr << __FILE__ << ":" << __LINE__ << ":" << std::endl << "caught non-std EXCEPTION!" << std::endl;
+        logger.Log(ERROR, "[%s]: caught non-std EXCEPTION.\n", __func__);
         return 1;
     }
 

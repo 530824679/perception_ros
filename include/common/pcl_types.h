@@ -1,6 +1,21 @@
 //
-// Created by chenwei on 20-5-21.
-//
+/******************************************************************************/
+/*!
+File name: pcl_types.h
+
+Description:
+This file define head to redefine the PCL type
+
+Version: 0.1
+Create date: 2020.5.11
+Author: Chen Wei
+Email: wei.chen@imotion.ai
+
+Copyright (c) iMotion Automotive Technology (Suzhou) Co. Ltd. All rights reserved,
+also regarding any disposal, exploitation, reproduction, editing, distribution,
+as well as in the event of applications for industrial property rights.
+*/
+/******************************************************************************/
 
 #ifndef PERCEPTION_ROS_PCL_TYPES_H
 #define PERCEPTION_ROS_PCL_TYPES_H

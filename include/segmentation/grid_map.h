@@ -34,12 +34,16 @@ as well as in the event of applications for industrial property rights.
 
 // local include
 #include "common/pcl_types.h"
+#include "common/logging.h"
+
+extern Logging logger;
 
 class GridMap {
 public:
     GridMap();
     ~GridMap();
 
+    void ClearGridMap();
     bool SetParams(int column, int row, float grid_size, float height_threshold, float absolute_height);
     float Min(float x, float y);
     float Max(float x, float y);
@@ -51,6 +55,8 @@ private:
     float grid_size_;
     float height_threshold_;
     float absolute_height_;
+    std::vector<std::vector<int>> grid_map_type_;
+    std::vector<std::vector<pcl_util::VPointCloud>> grid_map_vec_;
 };
 
 #endif //PERCEPTION_ROS_GRID_MAP_H

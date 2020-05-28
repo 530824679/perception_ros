@@ -5,7 +5,7 @@
     "roi_y_min": -10,
     "roi_y_max": 10,
     "roi_z_min": -0.5,
-    "roi_z_max": 4
+    "roi_z_max": 2.5
   },
   "calibrate" : {
     "x_min": 1.0,
@@ -22,9 +22,10 @@
     "column": 200,
     "row": 400,
     "size": 0.1,
-    "threshold": 0.08,
+    "threshold": 0.1,
     "abs_height": 0.1,
-    "threads_num": 4,
+    "min_cluster_size": 10,
+    "max_cluster_size": 5000,
     "seg_distance": [10, 20, 30],
     "cluster_scale": [0.4, 0.6, 0.8, 1.0]
   }

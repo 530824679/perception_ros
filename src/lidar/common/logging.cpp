@@ -1,50 +1,50 @@
-#include "logging.h"
+#include "common/logging.h"
 
-#include <stdarg.h>
-#include <stdio.h>
-#include <string.h>
-
-#include <iostream>
-#include <ostream>
-
-logging::logging() :
-	lastrelog(false),
-	minLevel(INFO),
-	useColor(true),
-	cntErrors(0),
-	cntWarnings(0)
-{
+Logging::Logging() :
+	last_relog_(false),
+	min_level_(INFO),
+	use_color_(true),
+	cnt_errors_(0),
+	cnt_warnings_(0) {
 }
 
+void Logging::SetLevel(LogLevel level){
+	min_level_ = level;
+};
 
-bool logging::doPrint(loglevel level) const {
+void Logging::SetUseColor(bool use_color){
+	this->use_color_ = use_color;
+};
 
+unsigned Logging::GetNumWarnings() const{
+	return cnt_warnings_;
+};
+
+unsigned Logging::GetNumErrors() const{
+	return cnt_errors_;
+};
+
+bool Logging::DoPrint(LogLevel level) const {
 	// Log-level not fulfilled
-	if( level < minLevel )
+	if(level < min_level_)
 		return false;
 
 	// It is not allowed to print in silence level
-	if( level >= SILENCE )
+	if(level >= SILENCE)
 		return false;
 
 	return true;
 }
 
-
-void logging::log(loglevel level, const char* fmt, ... ) {
-
-	// Save some statistics
+void Logging::Log(LogLevel level, const char* fmt, ... ) {
 	if(level == ERROR)
-		cntErrors++;
+		cnt_errors_++;
 	if(level == WARNING)
-		cntWarnings++;
+		cnt_warnings_++;
 
-
-	// Check if level suffices...
-	if( ! doPrint(level) )
+	if( ! DoPrint(level) )
 		return;
 
-	// Default output of log message
 	std::ostream & os  = level >= INFO ? std::cerr : std::cout;
 
 	char text[1024];
@@ -55,27 +55,18 @@ void logging::log(loglevel level, const char* fmt, ... ) {
 	vsnprintf(text, 1023, fmt, ap);
 	va_end(ap);
 
-
-	// Make a new line if last cmd was a relog command
-	if(lastrelog)
-	{
-		lastrelog=false;
+	if(last_relog_) {
+		last_relog_ = false;
 		os << std::endl;
 	}
 
-	// Switch color
-	if( useColor )
-	{
-		switch( level )
-		{
+	if(use_color_) {
+		switch(level) {
 			case ERROR:
 				os << "\033[1;31m";
 				break;
 			case WARNING:
 				os << "\033[1;33m";
-				break;
-			case GOODNEWS:
-				os << "\033[1;32m";
 				break;
 			case DEBUG:
 				os << "\033[1;30m";
@@ -86,8 +77,7 @@ void logging::log(loglevel level, const char* fmt, ... ) {
 	}
 
 
-	switch( level )
-	{
+	switch(level) {
 		case ERROR:
 			os << "ERROR: ";
 			break;
@@ -100,19 +90,19 @@ void logging::log(loglevel level, const char* fmt, ... ) {
 
 	os << text;
 
-	if( useColor ) {
-		if( level==ERROR || level==WARNING || level==GOODNEWS || level==DEBUG )
+	if(use_color_) {
+		if( level==ERROR || level==WARNING || level==DEBUG )
 		os << "\033[0;m";
 	}
 
 	os.flush();
 }
 
-void logging::log( loglevel level, std::string &str) {
-	log(level, str.c_str());
+void Logging::Log(LogLevel level, std::string &str) {
+	Log(level, str.c_str());
 }
 
-void logging::relog(loglevel level, const char* fmt, ... ) {
+void Logging::ReLog(LogLevel level, const char* fmt, ... ) {
 	char text[1024];
 	memset(text, 0, sizeof(char)*1023);
 
@@ -121,10 +111,9 @@ void logging::relog(loglevel level, const char* fmt, ... ) {
 	vsnprintf(text, 1023, fmt, ap);
 	va_end(ap);
 
-	lastrelog = false;
-	log(level, "\r%s", text);
+	last_relog_ = false;
+	Log(level, "\r%s", text);
 
-	// Check if level suffices...
-	if( doPrint(level) )
-		lastrelog = true;
+	if( DoPrint(level) )
+		last_relog_ = true;
 }

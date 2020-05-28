@@ -16,46 +16,46 @@ bool Calibrate::Init(Json::Value params, std::string key){
         if (calibrate_param.isMember("x_min") && calibrate_param["x_min"].isDouble()) {
             x_min_ = calibrate_param["x_min"].asFloat();
         } else {
-            std::cout << "Has not key named x_min in the calibrate config" << std::endl;
+            logger.Log(ERROR, "[%s]: Has not key named x_min in the calibrate config.\n", __func__);
             return false;
         }
 
         if (calibrate_param.isMember("x_max") && calibrate_param["x_max"].isDouble()) {
             x_max_ = calibrate_param["x_max"].asFloat();
         } else {
-            std::cout << "Has not key named x_max in the calibrate config" << std::endl;
+            logger.Log(ERROR, "[%s]: Has not key named x_max in the calibrate config.\n", __func__);
             return false;
         }
 
         if (calibrate_param.isMember("y_min") && calibrate_param["y_min"].isDouble()) {
             y_min_ = calibrate_param["y_min"].asFloat();
         } else {
-            std::cout << "Has not key named y_min in the calibrate config" << std::endl;
+            logger.Log(ERROR, "[%s]: Has not key named y_min in the calibrate config.\n", __func__);
             return false;
         }
 
         if (calibrate_param.isMember("y_max") && calibrate_param["y_max"].isDouble()) {
             y_max_ = calibrate_param["y_max"].asFloat();
         } else {
-            std::cout << "Has not key named y_max in the calibrate config" << std::endl;
+            logger.Log(ERROR, "[%s]: Has not key named y_max in the calibrate config.\n", __func__);
             return false;
         }
 
         if (calibrate_param.isMember("z_min") && calibrate_param["z_min"].isDouble()) {
             z_min_ = calibrate_param["z_min"].asFloat();
         } else {
-            std::cout << "Has not key named z_min in the calibrate config" << std::endl;
+            logger.Log(ERROR, "[%s]: Has not key named z_min in the calibrate config.\n", __func__);
             return false;
         }
 
         if (calibrate_param.isMember("z_max") && calibrate_param["z_max"].isDouble()) {
             z_max_ = calibrate_param["z_max"].asFloat();
         } else {
-            std::cout << "Has not key named z_max in the calibrate config" << std::endl;
+            logger.Log(ERROR, "[%s]: Has not key named z_max in the calibrate config.\n", __func__);
             return false;
         }
     }else{
-        std::cout << "Has not key named calibrate in the perception config" << std::endl;
+        logger.Log(ERROR, "[%s]: Has not key named calibrate in the perception config.\n", __func__);
     }
 }
 
