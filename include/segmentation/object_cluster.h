@@ -40,7 +40,7 @@ public:
 
     bool Init(Json::Value params, std::string key);
     void Cluster(pcl_util::VPointCloudPtr &in_cloud_ptr);
-    void ClusterThread(pcl_util::VPointCloudPtr &in_cloud_ptr, double max_cluster_distance);
+    void ClusterObject(pcl_util::VPointCloudPtr &in_cloud_ptr, double max_cluster_distance);
     void Process(pcl_util::VPointCloudPtr &in_cloud_ptr, pcl_util::VPointCloudPtr &out_cloud_ptr);
 
 private:

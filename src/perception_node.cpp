@@ -17,9 +17,14 @@ as well as in the event of applications for industrial property rights.
 /******************************************************************************/
 
 #include "process/lidar_process.h"
+#include "common/logging.h"
+
+Logging logger;
 
 int main(int argc, char **argv)
 {
+    logger.SetLevel(ERROR);
+
     try
     {
         ros::init(argc, argv, "perception_node");

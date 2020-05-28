@@ -121,16 +121,14 @@ void Segment::Cluster(pcl_util::VPointCloudPtr &in_cloud_ptr) {
         }
     }
 
-    std::vector<std::thread> threads(threads_num_);
-    for (unsigned int i = 0; i < threads_num_; ++i){
-        threads[i] = std::thread(&Segment::ClusterThread, this, segment_array[i], cluster_scale_[i]);
+#pragma omp for
+    for (size_t i = 0; i < segment_array.size(); i++){
+        ClusterObject(segment_array[i], cluster_scale_[i]);
     }
-    for (auto it = threads.begin(); it != threads.end(); ++it){
-        it->join();
-    }
+
 }
 
-void Segment::ClusterThread(pcl_util::VPointCloudPtr &in_cloud_ptr, double max_cluster_distance){
+void Segment::ClusterObject(pcl_util::VPointCloudPtr &in_cloud_ptr, double max_cluster_distance){
     pcl::search::KdTree<pcl_util::VPoint>::Ptr tree(new pcl::search::KdTree<pcl_util::VPoint>);
 
     pcl_util::VPointCloudPtr cloud_2d(new pcl_util::VPointCloud);
@@ -141,7 +139,18 @@ void Segment::ClusterThread(pcl_util::VPointCloudPtr &in_cloud_ptr, double max_c
         cloud_2d->points[i].z = 0;
     }
 
+    if (cloud_2d->points.size() > 0)
+        tree->setInputCloud(cloud_2d);
 
+    std::vector<pcl::PointIndices> local_indices;
+
+    pcl::EuclideanClusterExtraction<pcl_util::VPoint> euclid;
+    euclid.setInputCloud(cloud_2d);
+    euclid.setClusterTolerance(max_cluster_distance);
+    euclid.setMinClusterSize(MIN_CLUSTER_SIZE);
+    euclid.setMaxClusterSize(MAX_CLUSTER_SIZE);
+    euclid.setSearchMethod(tree);
+    euclid.extract(local_indices);
 
 }
 
