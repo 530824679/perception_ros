@@ -171,9 +171,11 @@ void Segment::ClusterObject(pcl_util::VPointCloudPtr &in_cloud_ptr, double max_c
 }
 
 void Segment::Process(pcl_util::VPointCloudPtr &in_cloud_ptr, pcl_util::VPointCloudPtr &out_cloud_ptr){
-    pcl_util::VPointCloudPtr ground_cloud_ptr(new pcl_util::VPointCloud());
-    pcl_util::VPointCloudPtr object_cloud_ptr(new pcl_util::VPointCloud());
-    grid_map_->ConstructGridMap(in_cloud_ptr, ground_cloud_ptr, out_cloud_ptr);
+    std::vector<std::vector<int>> grid_map_type;
+    std::vector<std::vector<pcl_util::VPointCloud>> grid_map_vec;
+    grid_map_->BuildGridMap(in_cloud_ptr, grid_map_type, grid_map_vec);
+
+
 
     //std::vector<pcl_util::VPointCloud> object_point_cloud;
     //Cluster(out_cloud_ptr, object_point_cloud);

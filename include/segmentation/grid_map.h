@@ -43,20 +43,18 @@ public:
     GridMap();
     ~GridMap();
 
-    void ClearGridMap();
+    void InitGridMap(std::vector<std::vector<int>> &grid_map_type, std::vector<std::vector<pcl_util::VPointCloud>> &grid_map_vec);
     bool SetParams(int column, int row, float grid_size, float height_threshold, float absolute_height);
     float Min(float x, float y);
     float Max(float x, float y);
 
-    bool ConstructGridMap(pcl_util::VPointCloudPtr &in_cloud_ptr, pcl_util::VPointCloudPtr &ground_cloud_ptr, pcl_util::VPointCloudPtr &object_cloud_ptr);
+    bool BuildGridMap(pcl_util::VPointCloudPtr &in_cloud_ptr, std::vector<std::vector<int>> &grid_map_type, std::vector<std::vector<pcl_util::VPointCloud>> &grid_map_vec);
 private:
     int column_;
     int row_;
     float grid_size_;
     float height_threshold_;
     float absolute_height_;
-    std::vector<std::vector<int>> grid_map_type_;
-    std::vector<std::vector<pcl_util::VPointCloud>> grid_map_vec_;
 };
 
 #endif //PERCEPTION_ROS_GRID_MAP_H

@@ -14,15 +14,16 @@ GridMap::~GridMap() {
 
 }
 
-void GridMap::ClearGridMap(){
+void GridMap::InitGridMap(std::vector<std::vector<int>> &grid_map_type, std::vector<std::vector<pcl_util::VPointCloud>> &grid_map_vec){
     if (column_ > 0 && row_ > 0){
-        grid_map_vec_.resize(row_);
-        grid_map_type_.resize(row_);
+        grid_map_vec.resize(row_);
+        grid_map_type.resize(row_);
         for (int i = 0; i < row_; ++i) {
-            grid_map_vec_[i].resize(column_);
-            grid_map_type_[i].resize(column_);
+            grid_map_vec[i].resize(column_);
+            grid_map_type[i].resize(column_);
             for (int j = 0; j < column_; ++j) {
-                grid_map_type_[i][j] = UNKNOW;
+                grid_map_type[i][j] = UNKNOW;
+                grid_map_vec[i][j].clear();
             }
         }
     }else{
@@ -46,8 +47,9 @@ float GridMap::Max(float x, float y){
     return (x) > (y) ? (x) : (y);
 }
 
-bool GridMap::ConstructGridMap(pcl_util::VPointCloudPtr &in_cloud_ptr, pcl_util::VPointCloudPtr &ground_cloud_ptr, pcl_util::VPointCloudPtr &object_cloud_ptr){
-    ClearGridMap();
+bool GridMap::BuildGridMap(pcl_util::VPointCloudPtr &in_cloud_ptr, std::vector<std::vector<int>> &grid_map_type, std::vector<std::vector<pcl_util::VPointCloud>> &grid_map_vec){
+
+    InitGridMap(grid_map_type, grid_map_vec);
 
     float min_height[row_][column_] = {0};
     float max_height[row_][column_] = {0};
@@ -68,52 +70,25 @@ bool GridMap::ConstructGridMap(pcl_util::VPointCloudPtr &in_cloud_ptr, pcl_util:
                 min_height[x_grid][y_grid] = Min(min_height[x_grid][y_grid], in_cloud_ptr->points[count].z);
                 max_height[x_grid][y_grid] = Max(max_height[x_grid][y_grid], in_cloud_ptr->points[count].z);
             }
-            grid_map_vec_[x_grid][y_grid].push_back(in_cloud_ptr->points[count]);
+            grid_map_vec[x_grid][y_grid].push_back(in_cloud_ptr->points[count]);
         }
     }
 
     for (int i = 0; i < column_; ++i) {
         for (int j = 0; j < row_; ++j) {
-            if (grid_map_vec_[i][j].empty())
+            if (grid_map_vec[i][j].empty())
                 continue;
             if((max_height[i][j] - min_height[i][j]) > height_threshold_){
-                grid_map_type_[i][j] = OBSTACLE;
+                grid_map_type[i][j] = OBSTACLE;
             }else{
                 // the lowest point height is between[-lidar_height-0.05, -lidar_height + 0.1]
                 if (min_height[i][j] > (-0.04 - 0.05) && min_height[i][j] < (-0.04 + 0.1))
                 {
-                    grid_map_type_[i][j] = GROUND;
+                    grid_map_type[i][j] = GROUND;
                 }
             }
         }
     }
-    
-    
-    
-
-
-    pcl::ExtractIndices<pcl_util::VPoint> cliper;
-    pcl_util::PointIndices indices;
-    for (unsigned int i = 0; i < in_cloud_ptr->points.size(); ++i){
-        int x_grid = floor(double(in_cloud_ptr->points[i].x) / grid_size_);
-        int y_grid = floor(double(in_cloud_ptr->points[i].y) / grid_size_);
-
-        if((x_grid < row_ && x_grid >= 0) && (y_grid < column_/2 && y_grid >= -column_/2) && init[x_grid][y_grid]) {
-
-            if((max_height[x_grid][y_grid] - min_height[x_grid][y_grid] < height_threshold_) && (max_height[x_grid][y_grid] < absolute_height_)){
-                //std::cout << "max is : " << max_height[x_grid][y_grid] << " min is : " << min_height[x_grid][y_grid] << std::endl;
-                indices.indices.push_back(i);
-            }
-        }
-    }
-
-    cliper.setInputCloud (in_cloud_ptr);
-    cliper.setIndices(boost::make_shared<pcl::PointIndices>(indices));
-    cliper.setNegative(false);
-    cliper.filter(*ground_cloud_ptr);
-
-    cliper.setNegative(true);
-    cliper.filter(*object_cloud_ptr);
 
     return true;
 }
