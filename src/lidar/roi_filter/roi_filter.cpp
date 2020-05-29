@@ -59,16 +59,16 @@ bool ROIFilter::Init(Json::Value params, std::string key){
     }
 }
 
-bool ROIFilter::Filter(const pcl_util::VPointCloudPtr &in_cloud_ptr, pcl_util::VPointCloudPtr &filtered_cloud_all_ptr){
+bool ROIFilter::Filter(const pcl_util::PointCloudPtr &in_cloud_ptr, pcl_util::PointCloudPtr &filtered_cloud_all_ptr){
     FilterROI(in_cloud_ptr);
     *filtered_cloud_all_ptr = *filtered_cloud_all_ptr_;
     return true;
 }
 
-void ROIFilter::FilterROI(const pcl_util::VPointCloudPtr &in_cloud_ptr){
-    filtered_cloud_all_ptr_.reset(new pcl_util::VPointCloud(*in_cloud_ptr));
+void ROIFilter::FilterROI(const pcl_util::PointCloudPtr &in_cloud_ptr){
+    filtered_cloud_all_ptr_.reset(new pcl_util::PointCloud(*in_cloud_ptr));
 
-    pcl::PassThrough<pcl_util::VPoint> cloudXFilter, cloudYFilter, cloudZFilter;
+    pcl::PassThrough<pcl_util::Point> cloudXFilter, cloudYFilter, cloudZFilter;
     cloudXFilter.setInputCloud(filtered_cloud_all_ptr_);
     cloudXFilter.setFilterFieldName("x");
     cloudXFilter.setFilterLimits(roi_x_min_, roi_x_max_);

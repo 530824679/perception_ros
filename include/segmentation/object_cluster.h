@@ -31,23 +31,23 @@ as well as in the event of applications for industrial property rights.
 #include <mutex>
 
 // local include
-#include "grid_map.h"
+#include "object_segment.h"
 #include "common/logging.h"
 
 extern Logging logger;
 
-class Segment{
+class Cluster{
 public:
-    Segment();
-    ~Segment();
+    Cluster();
+    ~Cluster();
 
     bool Init(Json::Value params, std::string key);
-    void Cluster(pcl_util::VPointCloudPtr &in_cloud_ptr, std::vector<pcl_util::VPointCloud> &object_cloud);
-    void ClusterObject(pcl_util::VPointCloudPtr &in_cloud_ptr, double max_cluster_distance, std::vector<pcl_util::VPointCloud> &object_cloud);
-    void Process(pcl_util::VPointCloudPtr &in_cloud_ptr, pcl_util::VPointCloudPtr &out_cloud_ptr);
+    void Cluster(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<pcl_util::PointCloud> &object_cloud);
+    void ClusterObject(pcl_util::PointCloudPtr &in_cloud_ptr, double max_cluster_distance, std::vector<pcl_util::PointCloud> &object_cloud);
+    void Process(pcl_util::PointCloudPtr &in_cloud_ptr, pcl_util::PointCloudPtr &out_cloud_ptr);
 
 private:
-    std::shared_ptr<GridMap> grid_map_;
+    std::shared_ptr<Segment> segment_;
 
     std::vector<float> seg_distance_;
     std::vector<float> cluster_scale_;

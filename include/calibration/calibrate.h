@@ -51,11 +51,11 @@ public:
     ~Calibrate();
 
     bool Init(Json::Value params, std::string key);
-    void Correct(const pcl_util::VPointCloudPtr in_cloud_ptr, pcl_util::VPointCloudPtr out_cloud_ptr);
+    void Correct(const pcl_util::PointCloudPtr in_cloud_ptr, pcl_util::PointCloudPtr out_cloud_ptr);
     
 private:
-    void FilterPointCloud(const pcl_util::VPointCloudPtr in_cloud_ptr, pcl_util::VPointCloudPtr out_cloud_ptr);
-    Eigen::MatrixXf EstimateGroundPlane(const pcl_util::VPointCloudPtr in_cloud_ptr, const float distance_threshold);
+    void FilterPointCloud(const pcl_util::PointCloudPtr in_cloud_ptr, pcl_util::PointCloudPtr out_cloud_ptr);
+    Eigen::MatrixXf EstimateGroundPlane(const pcl_util::PointCloudPtr in_cloud_ptr, const float distance_threshold);
     Eigen::Matrix4f CreateRotateMatrix(Eigen::Vector3f before, Eigen::Vector3f after);
 
     float x_min_;

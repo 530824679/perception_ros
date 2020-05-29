@@ -29,6 +29,13 @@ if(PCL_FOUND)
     add_definitions(${PCL_DEFINITIONS})
 endif ()
 
+find_package(OpenCV)
+if(OpenCV_FOUND)
+    link_directories(${OpenCV_LIBRARY_DIRS})
+    add_definitions(${OpenCV_DEFINITIONS})
+endif ()
+
+
 catkin_package(
     INCLUDE_DIRS include
     CATKIN_DEPENDS roscpp rosbag std_msgs sensor_msgs message_filters
@@ -38,6 +45,7 @@ include_directories(
     include
     ${catkin_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIRS}
+    ${OpenCV_INCLUDE_DIRS}
     ${PCL_INCLUDE_DIRS}
 )
 

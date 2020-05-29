@@ -9,7 +9,7 @@ Logging::Logging() :
 }
 
 void Logging::SetLevel(LogLevel level){
-	min_level_ = level;
+	this->min_level_ = level;
 };
 
 void Logging::SetUseColor(bool use_color){
@@ -26,7 +26,7 @@ unsigned Logging::GetNumErrors() const{
 
 bool Logging::DoPrint(LogLevel level) const {
 	// Log-level not fulfilled
-	if(level < min_level_)
+	if(level > min_level_)
 		return false;
 
 	// It is not allowed to print in silence level
@@ -42,7 +42,7 @@ void Logging::Log(LogLevel level, const char* fmt, ... ) {
 	if(level == WARNING)
 		cnt_warnings_++;
 
-	if( ! DoPrint(level) )
+	if(! DoPrint(level))
 		return;
 
 	std::ostream & os  = level >= INFO ? std::cerr : std::cout;

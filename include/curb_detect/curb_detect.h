@@ -21,7 +21,7 @@ as well as in the event of applications for industrial property rights.
 #define PERCEPTION_ROS_CURB_DETECT_H
 
 // local include
-#include "segmentation/grid_map.h"
+#include "segmentation/object_segment.h"
 #include "common/logging.h"
 
 extern Logging logger;
@@ -33,7 +33,7 @@ public:
 
     bool Init(Json::Value params, std::string key);
 
-    void Process(pcl_util::VPointCloudPtr &in_cloud_ptr, pcl_util::VPointCloudPtr &out_cloud_ptr);
+    void Process(pcl_util::PointCloudPtr &in_cloud_ptr, pcl_util::PointCloudPtr &out_cloud_ptr);
 
 private:
 

@@ -14,9 +14,9 @@ enum LogLevel{
 };
 
 enum GridCellType{
-    UNKNOW = -1,
-    GROUND = 0,
-    OBSTACLE = 1
+    UNKNOW = 0,
+    GROUND = 1,
+    OBSTACLE = 2
 };
 
 #endif //PERCEPTION_ROS_TYPES_H

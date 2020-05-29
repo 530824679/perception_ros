@@ -26,11 +26,12 @@ target_link_libraries(curb_detect_lib
 
 ########## segmentation lib ##########
 add_library(segmentation_lib STATIC
-        ${PROJECT_SOURCE_DIR}/src/lidar/sementation/grid_map.cpp
+        ${PROJECT_SOURCE_DIR}/src/lidar/sementation/object_segment.cpp
         ${PROJECT_SOURCE_DIR}/src/lidar/sementation/object_cluster.cpp)
 target_link_libraries(segmentation_lib
         common_lib
-        ${PCL_LIBRARIES})
+        ${PCL_LIBRARIES}
+        ${OpenCV_LIBRARIES})
 
 ########## object_detect_lib ##########
 

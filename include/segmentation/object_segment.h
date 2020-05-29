@@ -29,8 +29,14 @@ as well as in the event of applications for industrial property rights.
 #include <pcl/filters/passthrough.h>
 #include <pcl/filters/extract_indices.h>
 
+// opencv include
+#include <opencv2/opencv.hpp>
+
 // json include
 #include <jsoncpp/json/json.h>
+
+// math include
+#include <math.h>
 
 // local include
 #include "common/pcl_types.h"
@@ -38,17 +44,33 @@ as well as in the event of applications for industrial property rights.
 
 extern Logging logger;
 
-class GridMap {
+class Grid{
 public:
-    GridMap();
-    ~GridMap();
+    int row_;
+    int column_;
+    int type_;
 
-    void InitGridMap(std::vector<std::vector<int>> &grid_map_type, std::vector<std::vector<pcl_util::VPointCloud>> &grid_map_vec);
+    Grid(int row, int column, int type){
+        row_ = row;
+        column_ = column;
+        type_ = type;
+    }
+
+    bool operator<(const Grid &p) const{
+        return (row < p.row_) || (row == p.row_ && column < p.column_);
+    }
+};
+
+class Segment {
+public:
+    Segment();
+    ~Segment();
+
     bool SetParams(int column, int row, float grid_size, float height_threshold, float absolute_height);
     float Min(float x, float y);
     float Max(float x, float y);
 
-    bool BuildGridMap(pcl_util::VPointCloudPtr &in_cloud_ptr, std::vector<std::vector<int>> &grid_map_type, std::vector<std::vector<pcl_util::VPointCloud>> &grid_map_vec);
+    bool BuildGridMap(pcl_util::PointCloudPtr &in_cloud_ptr, std::map<Grid, std::vector<pcl_util::Point>> &grid);
 private:
     int column_;
     int row_;

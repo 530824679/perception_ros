@@ -72,14 +72,15 @@ class LidarProcess {
 
 public:
     LidarProcess(ros::NodeHandle node, std::string config_path);
+    LidarProcess(std::string config_path);
     ~LidarProcess();
 
     bool Init(std::string &config_path);
 
-    void ProcessLidarData(const pcl_util::VPointCloudPtr &in_cloud_ptr);
+    void ProcessLidarData(const pcl_util::PointCloudPtr &in_cloud_ptr);
 
 private:
-    void ProcessPointCloud(const pcl_util::VPointCloudPtr &in_cloud_ptr);
+    void ProcessPointCloud(const pcl_util::PointCloudPtr &in_cloud_ptr);
 
 private:
     // Sub module ptr
@@ -88,9 +89,9 @@ private:
     std::shared_ptr<Segment> object_segment_;
 
     // Point clouds
-    pcl_util::VPointCloudPtr filtered_cloud_ptr_;
-    pcl_util::VPointCloudPtr filtered_cloud_objects_ptr_;
-    pcl_util::VPointCloudPtr filtered_cloud_ground_ptr_;
+    pcl_util::PointCloudPtr filtered_cloud_ptr_;
+    pcl_util::PointCloudPtr filtered_cloud_objects_ptr_;
+    pcl_util::PointCloudPtr filtered_cloud_ground_ptr_;
 
     // Markers for visualization
     visualization_msgs::Marker bbox_list_;

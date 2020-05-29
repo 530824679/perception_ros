@@ -59,8 +59,8 @@ bool Calibrate::Init(Json::Value params, std::string key){
     }
 }
 
-void Calibrate::Correct(const pcl_util::VPointCloudPtr in_cloud_ptr, pcl_util::VPointCloudPtr out_cloud_ptr){
-    pcl_util::VPointCloudPtr filter_cloud_ptr(new pcl_util::VPointCloud);
+void Calibrate::Correct(const pcl_util::PointCloudPtr in_cloud_ptr, pcl_util::PointCloudPtr out_cloud_ptr){
+    pcl_util::PointCloudPtr filter_cloud_ptr(new pcl_util::PointCloud);
     FilterPointCloud(in_cloud_ptr, filter_cloud_ptr);
 
     Eigen::MatrixXf normal_mat = EstimateGroundPlane(filter_cloud_ptr, 0.1);
@@ -69,8 +69,8 @@ void Calibrate::Correct(const pcl_util::VPointCloudPtr in_cloud_ptr, pcl_util::V
     pcl::transformPointCloud(*in_cloud_ptr, *out_cloud_ptr, rotation);
 }
 
-void Calibrate::FilterPointCloud(const pcl_util::VPointCloudPtr in_cloud_ptr, pcl_util::VPointCloudPtr out_cloud_ptr){
-    pcl::ExtractIndices<pcl_util::VPoint> cliper;
+void Calibrate::FilterPointCloud(const pcl_util::PointCloudPtr in_cloud_ptr, pcl_util::PointCloudPtr out_cloud_ptr){
+    pcl::ExtractIndices<pcl_util::Point> cliper;
     cliper.setInputCloud(in_cloud_ptr);
     pcl_util::PointIndices indices;
 
@@ -87,8 +87,8 @@ void Calibrate::FilterPointCloud(const pcl_util::VPointCloudPtr in_cloud_ptr, pc
     cliper.filter(*out_cloud_ptr);
 }
 
-Eigen::MatrixXf Calibrate::EstimateGroundPlane(const pcl_util::VPointCloudPtr in_cloud_ptr, const float distance_threshold){
-    pcl::SACSegmentation<pcl_util::VPoint> plane_seg;
+Eigen::MatrixXf Calibrate::EstimateGroundPlane(const pcl_util::PointCloudPtr in_cloud_ptr, const float distance_threshold){
+    pcl::SACSegmentation<pcl_util::Point> plane_seg;
     pcl_util::PointIndicesPtr Plane_inliers(new pcl_util::PointIndices);
     pcl::ModelCoefficients::Ptr plane_coefficients(new pcl::ModelCoefficients);
     plane_seg.setOptimizeCoefficients(true);

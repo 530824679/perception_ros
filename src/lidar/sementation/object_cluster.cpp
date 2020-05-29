@@ -1,15 +1,15 @@
 
 #include "segmentation/object_cluster.h"
 
-Segment::Segment() {
+Cluster::Cluster() {
 
 }
 
-Segment::~Segment() {
+Cluster::~Cluster() {
 
 }
 
-bool Segment::Init(Json::Value params, std::string key){
+bool Cluster::Init(Json::Value params, std::string key){
     if(params.isMember(key)) {
         Json::Value segmentation_param = params[key];
 
@@ -93,19 +93,19 @@ bool Segment::Init(Json::Value params, std::string key){
     }
 }
 
-void Segment::Cluster(pcl_util::VPointCloudPtr &in_cloud_ptr, std::vector<pcl_util::VPointCloud> &object_cloud) {
+void Cluster::Cluster(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<pcl_util::PointCloud> &object_cloud) {
     size_t segment_size = cluster_scale_.size();
-    std::vector<pcl_util::VPointCloudPtr> segment_array(segment_size);
+    std::vector<pcl_util::PointCloudPtr> segment_array(segment_size);
 
 #pragma omp for
     for (size_t i = 0; i < segment_array.size(); i++) {
-        pcl_util::VPointCloudPtr tmp(new pcl_util::VPointCloud);
+        pcl_util::PointCloudPtr tmp(new pcl_util::PointCloud);
         segment_array[i] = tmp;
     }
 
 #pragma omp for
     for (size_t i = 0; i < in_cloud_ptr->points.size(); i++) {
-        pcl_util::VPoint current_point;
+        pcl_util::Point current_point;
         current_point.x = in_cloud_ptr->points[i].x;
         current_point.y = in_cloud_ptr->points[i].y;
         current_point.z = in_cloud_ptr->points[i].z;
@@ -136,10 +136,10 @@ void Segment::Cluster(pcl_util::VPointCloudPtr &in_cloud_ptr, std::vector<pcl_ut
 
 }
 
-void Segment::ClusterObject(pcl_util::VPointCloudPtr &in_cloud_ptr, double max_cluster_distance, std::vector<pcl_util::VPointCloud> &object_cloud){
-    pcl::search::KdTree<pcl_util::VPoint>::Ptr tree(new pcl::search::KdTree<pcl_util::VPoint>);
+void Cluster::ClusterObject(pcl_util::PointCloudPtr &in_cloud_ptr, double max_cluster_distance, std::vector<pcl_util::PointCloud> &object_cloud){
+    pcl::search::KdTree<pcl_util::Point>::Ptr tree(new pcl::search::KdTree<pcl_util::Point>);
 
-    pcl_util::VPointCloudPtr cloud_2d(new pcl_util::VPointCloud);
+    pcl_util::PointCloudPtr cloud_2d(new pcl_util::PointCloud);
     pcl::copyPointCloud(*in_cloud_ptr, *cloud_2d);
 #pragma omp for
     for (size_t i = 0; i < cloud_2d->points.size(); i++)
@@ -152,7 +152,7 @@ void Segment::ClusterObject(pcl_util::VPointCloudPtr &in_cloud_ptr, double max_c
 
     std::vector<pcl::PointIndices> local_indices;
 
-    pcl::EuclideanClusterExtraction<pcl_util::VPoint> euclidean;
+    pcl::EuclideanClusterExtraction<pcl_util::Point> euclidean;
     euclidean.setInputCloud(cloud_2d);
     euclidean.setClusterTolerance(max_cluster_distance);
     euclidean.setMinClusterSize(min_cluster_size_);
@@ -162,7 +162,7 @@ void Segment::ClusterObject(pcl_util::VPointCloudPtr &in_cloud_ptr, double max_c
 
 #pragma omp for
     for (size_t i = 0; i < local_indices.size(); i++){
-        pcl_util::VPointCloud cloud;
+        pcl_util::PointCloud cloud;
         for (auto pit = local_indices[i].indices.begin(); pit != local_indices[i].indices.end(); ++pit) {
             cloud.push_back(in_cloud_ptr->points[*pit]);
         }
@@ -170,14 +170,20 @@ void Segment::ClusterObject(pcl_util::VPointCloudPtr &in_cloud_ptr, double max_c
     }
 }
 
-void Segment::Process(pcl_util::VPointCloudPtr &in_cloud_ptr, pcl_util::VPointCloudPtr &out_cloud_ptr){
-    std::vector<std::vector<int>> grid_map_type;
-    std::vector<std::vector<pcl_util::VPointCloud>> grid_map_vec;
-    grid_map_->BuildGridMap(in_cloud_ptr, grid_map_type, grid_map_vec);
+void Cluster::Process(pcl_util::PointCloudPtr &in_cloud_ptr, pcl_util::PointCloudPtr &out_cloud_ptr){
+    std::map<Grid, std::vector<pcl_util::Point>> grid;
+    segment_->BuildGridMap(in_cloud_ptr, grid);
 
+    cv::Mat image = cv::Mat::zeros(400, 200, CV_8UC1);
+    for(int i = 0; i < 400; i++){
+        for (int j = 0; j < 200; ++j) {
+            image.at<int>(j,i) = grid_map_type[i][j] * 128 - 1;
+        }
+    }
+    cv::imshow("test", image);
+    cv::waitKey(100);
 
-
-    //std::vector<pcl_util::VPointCloud> object_point_cloud;
+    //std::vector<pcl_util::PointCloud> object_point_cloud;
     //Cluster(out_cloud_ptr, object_point_cloud);
 
 

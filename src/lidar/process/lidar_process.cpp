@@ -22,19 +22,31 @@ LidarProcess::LidarProcess(ros::NodeHandle node, std::string config_path){
     }
 
     // Initialize Point Cloud Pointers
-    filtered_cloud_ground_ptr_.reset(new pcl_util::VPointCloud);
-    filtered_cloud_objects_ptr_.reset(new pcl_util::VPointCloud);
-    filtered_cloud_ground_ptr_.reset(new pcl_util::VPointCloud);
+    filtered_cloud_ground_ptr_.reset(new pcl_util::PointCloud);
+    filtered_cloud_objects_ptr_.reset(new pcl_util::PointCloud);
+    filtered_cloud_ground_ptr_.reset(new pcl_util::PointCloud);
 
     // Initialize Subcribers
     lidar_subscriber_ = node.subscribe("/livox/lidar_1HDDGAU00100091", 100, &LidarProcess::ProcessLidarData, this, ros::TransportHints().reliable().tcpNoDelay(true));
 
     // Initialize Publishers
-    filtered_cloud_publisher_ = node.advertise<pcl_util::VPointCloud>("lidar_filtered", 1);
-    filtered_cloud_objects_publisher_ = node.advertise<pcl_util::VPointCloud>("lidar_filtered_objects", 1);
-    filtered_cloud_ground_publisher_ = node.advertise<pcl_util::VPointCloud>("lidar_filtered_ground", 1);
+    filtered_cloud_publisher_ = node.advertise<pcl_util::PointCloud>("lidar_filtered", 1);
+    filtered_cloud_objects_publisher_ = node.advertise<pcl_util::PointCloud>("lidar_filtered_objects", 1);
+    filtered_cloud_ground_publisher_ = node.advertise<pcl_util::PointCloud>("lidar_filtered_ground", 1);
     bbox_publisher_ = node.advertise<visualization_msgs::Marker>("lidar_bbox_marker", 1);
     velocity_publisher_ = node.advertise<visualization_msgs::MarkerArray>("lidar_velocity_marker", 1);
+
+}
+
+LidarProcess::LidarProcess(std::string config_path){
+    // Initialze Config Params
+    Init(config_path);
+    pcl_util::PointCloudPtr in_cloud_ptr(new pcl_util::PointCloud);
+    if (pcl::io::loadPCDFile<pcl_util::Point>("/home/chenwei/detection/lidar_perception_ros/data/pcd/400.pcd", *in_cloud_ptr) == -1) {
+        PCL_ERROR("PCD file reading failed.");
+        return;
+    }
+    ProcessLidarData(in_cloud_ptr);
 
 }
 
@@ -83,10 +95,10 @@ bool LidarProcess::Init(std::string &config_path) {
     }
 }
 
-void LidarProcess::ProcessLidarData(const pcl_util::VPointCloudPtr &in_cloud_ptr) {
-    filtered_cloud_ptr_.reset(new pcl_util::VPointCloud);
-    filtered_cloud_objects_ptr_.reset(new pcl_util::VPointCloud);
-    filtered_cloud_ground_ptr_.reset(new pcl_util::VPointCloud);
+void LidarProcess::ProcessLidarData(const pcl_util::PointCloudPtr &in_cloud_ptr) {
+    filtered_cloud_ptr_.reset(new pcl_util::PointCloud);
+    filtered_cloud_objects_ptr_.reset(new pcl_util::PointCloud);
+    filtered_cloud_ground_ptr_.reset(new pcl_util::PointCloud);
 
     filtered_cloud_ptr_->header.stamp = in_cloud_ptr->header.stamp;
     filtered_cloud_ptr_->header.frame_id = in_cloud_ptr->header.frame_id;
@@ -102,22 +114,22 @@ void LidarProcess::ProcessLidarData(const pcl_util::VPointCloudPtr &in_cloud_ptr
 
     ProcessPointCloud(in_cloud_ptr);
 
-    filtered_cloud_publisher_.publish(filtered_cloud_ptr_);
-    filtered_cloud_objects_publisher_.publish(filtered_cloud_objects_ptr_);
-    filtered_cloud_ground_publisher_.publish(filtered_cloud_ground_ptr_);
-    bbox_publisher_.publish(bbox_list_);
-    velocity_publisher_.publish(velocity_list_);
+//    filtered_cloud_publisher_.publish(filtered_cloud_ptr_);
+//    filtered_cloud_objects_publisher_.publish(filtered_cloud_objects_ptr_);
+//    filtered_cloud_ground_publisher_.publish(filtered_cloud_ground_ptr_);
+//    bbox_publisher_.publish(bbox_list_);
+//    velocity_publisher_.publish(velocity_list_);
 
     return;
 }
 
-void LidarProcess::ProcessPointCloud(const pcl_util::VPointCloudPtr &in_cloud_ptr){
+void LidarProcess::ProcessPointCloud(const pcl_util::PointCloudPtr &in_cloud_ptr){
     std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
 
-    pcl_util::VPointCloudPtr filter_cloud_all_ptr(new pcl_util::VPointCloud());
+    pcl_util::PointCloudPtr filter_cloud_all_ptr(new pcl_util::PointCloud());
     roi_filter_->Filter(in_cloud_ptr, filter_cloud_all_ptr);
 
-    pcl_util::VPointCloudPtr calibrate_cloud_all_ptr(new pcl_util::VPointCloud());
+    pcl_util::PointCloudPtr calibrate_cloud_all_ptr(new pcl_util::PointCloud());
     calibrate_->Correct(filter_cloud_all_ptr, calibrate_cloud_all_ptr);
 
     object_segment_->Process(filter_cloud_all_ptr, filtered_cloud_ptr_);

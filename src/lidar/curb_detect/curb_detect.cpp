@@ -8,11 +8,11 @@ CurbDetect::~CurbDetect() {
 
 }
 
-void CurbDetect::Process(pcl_util::VPointCloudPtr &in_cloud_ptr, pcl_util::VPointCloudPtr &out_cloud_ptr) {
-//    pcl_util::VPointCloudPtr grip_map_ptr(new pcl_util::VPointCloud());
+void CurbDetect::Process(pcl_util::PointCloudPtr &in_cloud_ptr, pcl_util::PointCloudPtr &out_cloud_ptr) {
+//    pcl_util::PointCloudPtr grip_map_ptr(new pcl_util::PointCloud());
 //    grid_map_->ConstructGridMap(in_cloud_ptr, grip_map_ptr);
 //
-//    pcl_util::VPointCloud left_point_cloud, right_point_cloud;
+//    pcl_util::PointCloud left_point_cloud, right_point_cloud;
 //    for (int i = 0; i < grip_map_ptr->points.size(); i++){
 //        pcl_util::VPoint point;
 //        point.x = grip_map_ptr->points[i].x;

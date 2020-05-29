@@ -35,8 +35,8 @@ public:
 
     bool Init(Json::Value params, std::string key);
 
-    bool Filter(const pcl_util::VPointCloudPtr &in_cloud_ptr, pcl_util::VPointCloudPtr &filtered_cloud_all_ptr);
-    void FilterROI(const pcl_util::VPointCloudPtr &in_cloud_ptr);
+    bool Filter(const pcl_util::PointCloudPtr &in_cloud_ptr, pcl_util::PointCloudPtr &filtered_cloud_all_ptr);
+    void FilterROI(const pcl_util::PointCloudPtr &in_cloud_ptr);
 
 private:
     float roi_x_min_;
@@ -46,7 +46,7 @@ private:
     float roi_z_min_;
     float roi_z_max_;
 
-    pcl_util::VPointCloudPtr filtered_cloud_all_ptr_;
+    pcl_util::PointCloudPtr filtered_cloud_all_ptr_;
 
 
 };
