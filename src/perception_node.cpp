@@ -31,7 +31,7 @@ int main(int argc, char **argv)
         //ros::NodeHandle nh;
 
         //LidarProcess node(nh, "/HDD_Disk/perception_ros/config/perception_params.json");
-        LidarProcess node("/HDD_Disk/perception_ros/config/perception_params.json");
+        LidarProcess node("/home/chenwei/perception_ros/config/perception_params.json");
 
         logger.Log(INFO, "[%s]: Start Perception ROS loop.\n", __func__);
 

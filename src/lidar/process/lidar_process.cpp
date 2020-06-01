@@ -42,7 +42,7 @@ LidarProcess::LidarProcess(std::string config_path){
     // Initialze Config Params
     Init(config_path);
     pcl_util::PointCloudPtr in_cloud_ptr(new pcl_util::PointCloud);
-    if (pcl::io::loadPCDFile<pcl_util::Point>("/home/chenwei/detection/lidar_perception_ros/data/pcd/400.pcd", *in_cloud_ptr) == -1) {
+    if (pcl::io::loadPCDFile<pcl_util::Point>("/home/chenwei/bag/pcd/400.pcd", *in_cloud_ptr) == -1) {
         PCL_ERROR("PCD file reading failed.");
         return;
     }
@@ -82,8 +82,8 @@ bool LidarProcess::Init(std::string &config_path) {
 
         // segmentation
         std::string segmentation_config = "segmentation";
-        object_segment_ = std::make_shared<Segment>();
-        if (!object_segment_->Init(root, segmentation_config)){
+        object_cluster_ = std::make_shared<Cluster>();
+        if (!object_cluster_->Init(root, segmentation_config)){
             logger.Log(WARNING, "[%s]: Init segment object failed.\n", __func__);
         }
         logger.Log(INFO, "[%s]: Init successfully, segment object.\n", __func__);
@@ -132,7 +132,7 @@ void LidarProcess::ProcessPointCloud(const pcl_util::PointCloudPtr &in_cloud_ptr
     pcl_util::PointCloudPtr calibrate_cloud_all_ptr(new pcl_util::PointCloud());
     calibrate_->Correct(filter_cloud_all_ptr, calibrate_cloud_all_ptr);
 
-    object_segment_->Process(filter_cloud_all_ptr, filtered_cloud_ptr_);
+    object_cluster_->Process(filter_cloud_all_ptr, filtered_cloud_ptr_);
 
     std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> fp_ms = end - start;

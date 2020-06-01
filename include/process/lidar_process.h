@@ -86,7 +86,7 @@ private:
     // Sub module ptr
     std::shared_ptr<ROIFilter> roi_filter_;
     std::shared_ptr<Calibrate> calibrate_;
-    std::shared_ptr<Segment> object_segment_;
+    std::shared_ptr<Cluster> object_cluster_;
 
     // Point clouds
     pcl_util::PointCloudPtr filtered_cloud_ptr_;

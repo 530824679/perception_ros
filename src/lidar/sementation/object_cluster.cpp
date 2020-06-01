@@ -85,15 +85,15 @@ bool Cluster::Init(Json::Value params, std::string key){
         }
 
         // set grid map params
-        grid_map_ = std::make_shared<GridMap>();
-        grid_map_->SetParams(column, row, grid_size, height_threshold, absolute_height);
+        segment_ = std::make_shared<Segment>();
+        segment_->SetParams(column, row, grid_size, height_threshold, absolute_height);
 
     }else{
         logger.Log(ERROR, "[%s]: Has not key named segmentation in the perception config.\n", __func__);
     }
 }
 
-void Cluster::Cluster(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<pcl_util::PointCloud> &object_cloud) {
+void Cluster::MultCluster(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<pcl_util::PointCloud> &object_cloud) {
     size_t segment_size = cluster_scale_.size();
     std::vector<pcl_util::PointCloudPtr> segment_array(segment_size);
 
@@ -171,17 +171,18 @@ void Cluster::ClusterObject(pcl_util::PointCloudPtr &in_cloud_ptr, double max_cl
 }
 
 void Cluster::Process(pcl_util::PointCloudPtr &in_cloud_ptr, pcl_util::PointCloudPtr &out_cloud_ptr){
-    std::map<Grid, std::vector<pcl_util::Point>> grid;
-    segment_->BuildGridMap(in_cloud_ptr, grid);
+    std::vector<std::vector<int>> grid_map_type;
+    segment_->BuildGridMap(in_cloud_ptr, grid_map_type);
 
     cv::Mat image = cv::Mat::zeros(400, 200, CV_8UC1);
     for(int i = 0; i < 400; i++){
         for (int j = 0; j < 200; ++j) {
-            image.at<int>(j,i) = grid_map_type[i][j] * 128 - 1;
+            if (grid_map_type[i][j] == OBSTACLE)
+                image.at<int>(400-i,200-j) = 255;
         }
     }
     cv::imshow("test", image);
-    cv::waitKey(100);
+    cv::waitKey(0);
 
     //std::vector<pcl_util::PointCloud> object_point_cloud;
     //Cluster(out_cloud_ptr, object_point_cloud);
