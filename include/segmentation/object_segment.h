@@ -46,10 +46,11 @@ extern Logging logger;
 
 class Grid{
 public:
-    Grid(int row, int column, int type){
-        row_ = row;
-        column_ = column;
+    Grid(int type){
         type_ = type;
+        mean_height_ = -1;
+        square_height_ = -1;
+        point_num_ = 0;
     }
 
     bool operator<(const Grid &p) const{
@@ -57,17 +58,13 @@ public:
     }
 
 private:
-    int row_;
-    int column_;
     int type_;
-
+    int point_num_;
     float mean_height_;
     float square_height_;
 
     pcl_util::PointCloudPtr grid_cloud_{new pcl_util::PointCloud};
     pcl_util::PointIndicesPtr grid_inliers_{new pcl_util::PointIndices};
-
-    int point_num_;
 };
 
 class Segment {
