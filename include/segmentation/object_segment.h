@@ -46,22 +46,20 @@ extern Logging logger;
 
 class Grid{
 public:
-    Grid(int type){
-        type_ = type;
-        mean_height_ = -1;
-        square_height_ = -1;
+    Grid(){
+        init_ = false;
+        type_ = UNKNOW;
+        min_height_ = -1;
+        max_height_ = -1;
         point_num_ = 0;
     }
 
-    bool operator<(const Grid &p) const{
-        return (row_ < p.row_) || (row_ == p.row_ && column_ < p.column_);
-    }
-
-private:
+public:
+    bool init_;
     int type_;
     int point_num_;
-    float mean_height_;
-    float square_height_;
+    float min_height_;
+    float max_height_;
 
     pcl_util::PointCloudPtr grid_cloud_{new pcl_util::PointCloud};
     pcl_util::PointIndicesPtr grid_inliers_{new pcl_util::PointIndices};
@@ -76,7 +74,7 @@ public:
     float Min(float x, float y);
     float Max(float x, float y);
     void InitGridMap(std::vector<std::vector<int>> &grid_map_type);
-    bool BuildGridMap(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<std::vector<int>> &grid_map_type);
+    bool BuildGridMap(pcl_util::PointCloudPtr &in_cloud_ptr, pcl_util::PointCloudPtr &out_cloud_ptr);
 private:
     int column_;
     int row_;

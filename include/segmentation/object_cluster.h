@@ -42,7 +42,7 @@ public:
     ~Cluster();
 
     bool Init(Json::Value params, std::string key);
-    void MultCluster(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<pcl_util::PointCloud> &object_cloud);
+    void EuclCluster(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<pcl_util::PointCloud> &object_cloud);
     void ClusterObject(pcl_util::PointCloudPtr &in_cloud_ptr, double max_cluster_distance, std::vector<pcl_util::PointCloud> &object_cloud);
     void Process(pcl_util::PointCloudPtr &in_cloud_ptr, pcl_util::PointCloudPtr &out_cloud_ptr);
 

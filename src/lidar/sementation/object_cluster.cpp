@@ -93,7 +93,7 @@ bool Cluster::Init(Json::Value params, std::string key){
     }
 }
 
-void Cluster::MultCluster(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<pcl_util::PointCloud> &object_cloud) {
+void Cluster::EuclCluster(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<pcl_util::PointCloud> &object_cloud) {
     size_t segment_size = cluster_scale_.size();
     std::vector<pcl_util::PointCloudPtr> segment_array(segment_size);
 
@@ -171,21 +171,12 @@ void Cluster::ClusterObject(pcl_util::PointCloudPtr &in_cloud_ptr, double max_cl
 }
 
 void Cluster::Process(pcl_util::PointCloudPtr &in_cloud_ptr, pcl_util::PointCloudPtr &out_cloud_ptr){
-    std::vector<std::vector<int>> grid_map_type;
-    segment_->BuildGridMap(in_cloud_ptr, grid_map_type);
+    segment_->BuildGridMap(in_cloud_ptr, out_cloud_ptr);
 
-    cv::Mat image = cv::Mat::zeros(400, 200, CV_8UC1);
-    for(int i = 0; i < 400; i++){
-        for (int j = 0; j < 200; ++j) {
-            if (grid_map_type[i][j] == OBSTACLE)
-                image.at<int>(400-i,200-j) = 255;
-        }
-    }
-    cv::imshow("test", image);
-    cv::waitKey(0);
+    logger.Log(INFO, "Point Cloud size is: [%d]\n", out_cloud_ptr->points.size());
 
-    //std::vector<pcl_util::PointCloud> object_point_cloud;
-    //Cluster(out_cloud_ptr, object_point_cloud);
+    std::vector<pcl_util::PointCloud> object_point_cloud;
+    EuclCluster(out_cloud_ptr, object_point_cloud);
 
 
 
