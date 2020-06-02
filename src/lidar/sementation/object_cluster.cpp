@@ -93,6 +93,15 @@ bool Cluster::Init(Json::Value params, std::string key){
     }
 }
 
+void Cluster::VoxelGridFilter(pcl_util::PointCloudPtr &in_cloud_ptr, pcl_util::PointCloudPtr &out_cloud_ptr,
+                              float leaf_size) {
+    pcl::VoxelGrid<pcl::PointXYZ> filter;
+    filter.setInputCloud(in_cloud_ptr);
+    filter.setLeafSize(leaf_size, leaf_size, leaf_size);
+    filter.filter(*out_cloud_ptr);
+}
+
+
 void Cluster::EuclCluster(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<pcl_util::PointCloud> &object_cloud) {
     size_t segment_size = cluster_scale_.size();
     std::vector<pcl_util::PointCloudPtr> segment_array(segment_size);
@@ -129,18 +138,22 @@ void Cluster::EuclCluster(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<pcl
         }
     }
 
-#pragma omp for
-    for (size_t i = 0; i < segment_array.size(); i++){
-        ClusterObject(segment_array[i], cluster_scale_[i], object_cloud);
+    std::vector<std::thread> threads(4);
+    for (unsigned int i = 0; i < 4; ++i){
+        threads[i] = std::thread(&Cluster::ClusterThread, this, segment_array[i], cluster_scale_[i]);//, object_cloud);
     }
 
+    for (auto it = threads.begin(); it != threads.end(); ++it){
+        it->join();
+    }
 }
 
-void Cluster::ClusterObject(pcl_util::PointCloudPtr &in_cloud_ptr, double max_cluster_distance, std::vector<pcl_util::PointCloud> &object_cloud){
+void Cluster::ClusterThread(pcl_util::PointCloudPtr in_cloud_ptr, float max_cluster_distance){//, std::vector<pcl_util::PointCloud> &object_cloud){
     pcl::search::KdTree<pcl_util::Point>::Ptr tree(new pcl::search::KdTree<pcl_util::Point>);
 
     pcl_util::PointCloudPtr cloud_2d(new pcl_util::PointCloud);
     pcl::copyPointCloud(*in_cloud_ptr, *cloud_2d);
+
 #pragma omp for
     for (size_t i = 0; i < cloud_2d->points.size(); i++)
     {
@@ -160,14 +173,15 @@ void Cluster::ClusterObject(pcl_util::PointCloudPtr &in_cloud_ptr, double max_cl
     euclidean.setSearchMethod(tree);
     euclidean.extract(local_indices);
 
-#pragma omp for
-    for (size_t i = 0; i < local_indices.size(); i++){
-        pcl_util::PointCloud cloud;
-        for (auto pit = local_indices[i].indices.begin(); pit != local_indices[i].indices.end(); ++pit) {
-            cloud.push_back(in_cloud_ptr->points[*pit]);
-        }
-        object_cloud.push_back(cloud);
-    }
+//    for (size_t i = 0; i < local_indices.size(); i++){
+//        pcl_util::PointCloud cloud;
+//        for (auto pit = local_indices[i].indices.begin(); pit != local_indices[i].indices.end(); ++pit) {
+//            cloud.push_back(in_cloud_ptr->points[*pit]);
+//        }
+//        mutex_.lock();
+//        object_cloud.push_back(cloud);
+//        mutex_.unlock();
+//    }
 }
 
 void Cluster::Process(pcl_util::PointCloudPtr &in_cloud_ptr, pcl_util::PointCloudPtr &out_cloud_ptr){

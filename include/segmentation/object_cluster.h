@@ -26,6 +26,9 @@ as well as in the event of applications for industrial property rights.
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl/segmentation/conditional_euclidean_clustering.h>
 
+#include <pcl/filters/extract_indices.h>
+#include <pcl/filters/voxel_grid.h>
+
 // system include
 #include <thread>
 #include <mutex>
@@ -42,8 +45,9 @@ public:
     ~Cluster();
 
     bool Init(Json::Value params, std::string key);
+    void VoxelGridFilter(pcl_util::PointCloudPtr &in_cloud_ptr, pcl_util::PointCloudPtr &out_cloud_ptr, float leaf_size);
     void EuclCluster(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<pcl_util::PointCloud> &object_cloud);
-    void ClusterObject(pcl_util::PointCloudPtr &in_cloud_ptr, double max_cluster_distance, std::vector<pcl_util::PointCloud> &object_cloud);
+    void ClusterThread(pcl_util::PointCloudPtr in_cloud_ptr, float max_cluster_distance);//, std::vector<pcl_util::PointCloud> &object_cloud);
     void Process(pcl_util::PointCloudPtr &in_cloud_ptr, pcl_util::PointCloudPtr &out_cloud_ptr);
 
 private:
@@ -53,6 +57,9 @@ private:
     std::vector<float> cluster_scale_;
     int min_cluster_size_;
     int max_cluster_size_;
+
+    int thread_num_;
+    std::mutex mutex_;
 };
 
 #endif //PERCEPTION_ROS_OBJECT_CLUSTER_H
