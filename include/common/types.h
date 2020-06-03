@@ -19,4 +19,24 @@ enum GridCellType{
     OBSTACLE = 2
 };
 
+enum CameraAngle{
+    XY,
+    TopDown,
+    Side,
+    FPS
+};
+
+struct Color{
+public:
+    Color(float r, float g, float b):r_(r), g_(g), b_(b){};
+    float GetR(){ return r_; };
+    float GetG(){ return g_; };
+    float GetB(){ return b_; };
+
+private:
+    float r_;
+    float g_;
+    float b_;
+};
+
 #endif //PERCEPTION_ROS_TYPES_H

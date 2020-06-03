@@ -47,7 +47,7 @@ public:
     bool Init(Json::Value params, std::string key);
     void VoxelGridFilter(pcl_util::PointCloudPtr &in_cloud_ptr, pcl_util::PointCloudPtr &out_cloud_ptr, float leaf_size);
     void EuclCluster(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<pcl_util::PointCloud> &object_cloud);
-    void ClusterThread(pcl_util::PointCloudPtr in_cloud_ptr, float max_cluster_distance);//, std::vector<pcl_util::PointCloud> &object_cloud);
+    void ClusterThread(pcl_util::PointCloudPtr &in_cloud_ptr, float max_cluster_distance, std::vector<pcl_util::PointCloud> &object_cloud);
     void Process(pcl_util::PointCloudPtr &in_cloud_ptr, pcl_util::PointCloudPtr &out_cloud_ptr);
 
 private:

@@ -114,11 +114,11 @@ void LidarProcess::ProcessLidarData(const pcl_util::PointCloudPtr &in_cloud_ptr)
 
     ProcessPointCloud(in_cloud_ptr);
 
-    filtered_cloud_publisher_.publish(filtered_cloud_ptr_);
-    filtered_cloud_objects_publisher_.publish(filtered_cloud_objects_ptr_);
-    filtered_cloud_ground_publisher_.publish(filtered_cloud_ground_ptr_);
-    bbox_publisher_.publish(bbox_list_);
-    velocity_publisher_.publish(velocity_list_);
+//    filtered_cloud_publisher_.publish(filtered_cloud_ptr_);
+//    filtered_cloud_objects_publisher_.publish(filtered_cloud_objects_ptr_);
+//    filtered_cloud_ground_publisher_.publish(filtered_cloud_ground_ptr_);
+//    bbox_publisher_.publish(bbox_list_);
+//    velocity_publisher_.publish(velocity_list_);
 
     return;
 }
@@ -137,4 +137,13 @@ void LidarProcess::ProcessPointCloud(const pcl_util::PointCloudPtr &in_cloud_ptr
     std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> fp_ms = end - start;
     std::cout << "Done! Took " << fp_ms.count() << "ms\n";
+
+    // TMP Visualization
+    pcl_util::PCLVisualizerPtr viewer (new pcl_util::PCLVisualizer("3D Viewer"));
+    CameraAngle angle = TopDown;
+    Render render;
+    render.InitCamera(angle, viewer);
+    render.RenderPointCloud(viewer, filtered_cloud_ptr_, "PointCloud", Color(1,0,0));
+
+    viewer->spinOnce();
 }

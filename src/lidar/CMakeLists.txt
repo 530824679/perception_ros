@@ -52,6 +52,12 @@ target_link_libraries(segmentation_lib
 ########## tracker_lib ##########
 
 
+########## render lib ##########
+add_library(render_lib STATIC
+        ${PROJECT_SOURCE_DIR}/src/lidar/render/render.cpp)
+target_link_libraries(render_lib
+        ${PCL_LIBRARIES})
+
 
 ########## perception_lib ##########
 add_library(lidar_perception_lib STATIC
@@ -62,4 +68,5 @@ target_link_libraries(lidar_perception_lib
         roi_filter_lib
         calibration_lib
         curb_detect_lib
-        segmentation_lib)
+        segmentation_lib
+        render_lib)

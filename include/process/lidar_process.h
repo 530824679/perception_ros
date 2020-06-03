@@ -65,6 +65,7 @@ as well as in the event of applications for industrial property rights.
 #include "segmentation/object_cluster.h"
 #include "common/pcl_types.h"
 #include "common/logging.h"
+#include "render/render.h"
 
 extern Logging logger;
 

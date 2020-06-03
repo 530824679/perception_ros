@@ -2,7 +2,7 @@
 #include "segmentation/object_cluster.h"
 
 Cluster::Cluster() {
-
+    thread_num_ = 4;
 }
 
 Cluster::~Cluster() {
@@ -106,7 +106,6 @@ void Cluster::EuclCluster(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<pcl
     size_t segment_size = cluster_scale_.size();
     std::vector<pcl_util::PointCloudPtr> segment_array(segment_size);
 
-#pragma omp for
     for (size_t i = 0; i < segment_array.size(); i++) {
         pcl_util::PointCloudPtr tmp(new pcl_util::PointCloud);
         segment_array[i] = tmp;
@@ -138,9 +137,9 @@ void Cluster::EuclCluster(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<pcl
         }
     }
 
-    std::vector<std::thread> threads(4);
-    for (unsigned int i = 0; i < 4; ++i){
-        threads[i] = std::thread(&Cluster::ClusterThread, this, segment_array[i], cluster_scale_[i]);//, object_cloud);
+    std::vector<std::thread> threads(thread_num_);
+    for (unsigned int i = 0; i < thread_num_; ++i){
+        threads[i] = std::thread(&Cluster::ClusterThread, this, std::ref(segment_array[i]), cluster_scale_[i], std::ref(object_cloud));
     }
 
     for (auto it = threads.begin(); it != threads.end(); ++it){
@@ -148,13 +147,12 @@ void Cluster::EuclCluster(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<pcl
     }
 }
 
-void Cluster::ClusterThread(pcl_util::PointCloudPtr in_cloud_ptr, float max_cluster_distance){//, std::vector<pcl_util::PointCloud> &object_cloud){
+void Cluster::ClusterThread(pcl_util::PointCloudPtr &in_cloud_ptr, float max_cluster_distance, std::vector<pcl_util::PointCloud> &object_cloud){
     pcl::search::KdTree<pcl_util::Point>::Ptr tree(new pcl::search::KdTree<pcl_util::Point>);
 
     pcl_util::PointCloudPtr cloud_2d(new pcl_util::PointCloud);
     pcl::copyPointCloud(*in_cloud_ptr, *cloud_2d);
 
-#pragma omp for
     for (size_t i = 0; i < cloud_2d->points.size(); i++)
     {
         cloud_2d->points[i].z = 0;
@@ -173,27 +171,28 @@ void Cluster::ClusterThread(pcl_util::PointCloudPtr in_cloud_ptr, float max_clus
     euclidean.setSearchMethod(tree);
     euclidean.extract(local_indices);
 
-//    for (size_t i = 0; i < local_indices.size(); i++){
-//        pcl_util::PointCloud cloud;
-//        for (auto pit = local_indices[i].indices.begin(); pit != local_indices[i].indices.end(); ++pit) {
-//            cloud.push_back(in_cloud_ptr->points[*pit]);
-//        }
-//        mutex_.lock();
-//        object_cloud.push_back(cloud);
-//        mutex_.unlock();
-//    }
+    for (size_t i = 0; i < local_indices.size(); i++){
+        pcl_util::PointCloud cloud;
+        for (auto pit = local_indices[i].indices.begin(); pit != local_indices[i].indices.end(); ++pit) {
+            cloud.push_back(in_cloud_ptr->points[*pit]);
+        }
+        mutex_.lock();
+        object_cloud.push_back(cloud);
+        mutex_.unlock();
+    }
 }
 
 void Cluster::Process(pcl_util::PointCloudPtr &in_cloud_ptr, pcl_util::PointCloudPtr &out_cloud_ptr){
     segment_->BuildGridMap(in_cloud_ptr, out_cloud_ptr);
 
-    logger.Log(INFO, "Point Cloud size is: [%d]\n", out_cloud_ptr->points.size());
+    VoxelGridFilter(out_cloud_ptr, out_cloud_ptr, 0.1);
 
     std::vector<pcl_util::PointCloud> object_point_cloud;
     EuclCluster(out_cloud_ptr, object_point_cloud);
 
-
-
-
+    int size = object_point_cloud.size();
+    for (int i = 0; i < size; ++i) {
+        logger.Log(INFO, "object size is [%d].\n", object_point_cloud[i].points.size());
+    }
 
 }

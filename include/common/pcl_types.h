@@ -20,10 +20,12 @@ as well as in the event of applications for industrial property rights.
 #ifndef PERCEPTION_ROS_PCL_TYPES_H
 #define PERCEPTION_ROS_PCL_TYPES_H
 
+// pcl include
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 #include <pcl/common/transforms.h>
 #include <pcl/search/impl/kdtree.hpp>
+#include <pcl/visualization/pcl_visualizer.h>
 
 namespace pcl_util{
 
@@ -53,6 +55,9 @@ namespace pcl_util{
     //typedef pcl::ExtractIndices<Point> ExtractIndices;
     //typedef pcl::ExtractIndices<VPoint> VExtractIndices;
     //typedef pcl::ExtractIndices<CPoint> CExtractIndices;
+
+    typedef pcl::visualization::PCLVisualizer PCLVisualizer;
+    typedef pcl::visualization::PCLVisualizer::Ptr PCLVisualizerPtr;
 
     typedef pcl::KdTreeFLANN<Point> KdTree;
 

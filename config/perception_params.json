@@ -24,8 +24,8 @@
     "size": 0.5,
     "threshold": 0.3,
     "abs_height": 0.1,
-    "min_cluster_size": 10,
-    "max_cluster_size": 5000,
+    "min_cluster_size": 3,
+    "max_cluster_size": 500,
     "seg_distance": [10, 20, 30],
     "cluster_scale": [0.4, 0.6, 0.8, 1.0]
   }
