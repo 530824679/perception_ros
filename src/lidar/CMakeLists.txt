@@ -34,18 +34,16 @@ target_link_libraries(segmentation_lib
         ${OpenCV_LIBRARIES})
 
 ########## object_detect_lib ##########
-
-
-
-########## object_filter_lib ##########
+add_library(object_builder_lib STATIC
+        ${PROJECT_SOURCE_DIR}/src/lidar/object_builder/bbox_fitting.cpp)
+target_link_libraries(object_builder_lib
+        common_lib
+        ${PCL_LIBRARIES})
 
 
 
 ########## recognition_lib ##########
 
-
-
-########## segmentation_lib ##########
 
 
 
@@ -69,4 +67,5 @@ target_link_libraries(lidar_perception_lib
         calibration_lib
         curb_detect_lib
         segmentation_lib
+        object_builder_lib
         render_lib)

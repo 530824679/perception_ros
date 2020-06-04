@@ -61,7 +61,7 @@ namespace pcl_util{
 
     typedef pcl::KdTreeFLANN<Point> KdTree;
 
-    struct BoundingCube{
+    struct BBox{
         float x;
         float y;
         float z;
