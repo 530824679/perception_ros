@@ -42,7 +42,7 @@ LidarProcess::LidarProcess(std::string config_path){
     // Initialze Config Params
     Init(config_path);
     pcl_util::PointCloudPtr in_cloud_ptr(new pcl_util::PointCloud);
-    if (pcl::io::loadPCDFile<pcl_util::Point>("/home/chenwei/detection/lidar_perception_ros/data/pcd/400.pcd", *in_cloud_ptr) == -1) {
+    if (pcl::io::loadPCDFile<pcl_util::Point>("/home/chenwei/bag/pcd/400.pcd", *in_cloud_ptr) == -1) {
         PCL_ERROR("PCD file reading failed.");
         return;
     }
@@ -132,11 +132,25 @@ void LidarProcess::ProcessPointCloud(const pcl_util::PointCloudPtr &in_cloud_ptr
     pcl_util::PointCloudPtr calibrate_cloud_all_ptr(new pcl_util::PointCloud());
     calibrate_->Correct(filter_cloud_all_ptr, calibrate_cloud_all_ptr);
 
-    object_cluster_->Process(filter_cloud_all_ptr, filtered_cloud_ptr_);
+    std::vector<pcl_util::PointCloud> object_point_cloud;
+    object_cluster_->Process(filter_cloud_all_ptr, object_point_cloud);
+
+
 
     std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> fp_ms = end - start;
     std::cout << "Done! Took " << fp_ms.count() << "ms\n";
+
+
+
+
+
+
+
+
+
+
+
 
     // TMP Visualization
     pcl_util::PCLVisualizerPtr viewer (new pcl_util::PCLVisualizer("3D Viewer"));
@@ -145,5 +159,8 @@ void LidarProcess::ProcessPointCloud(const pcl_util::PointCloudPtr &in_cloud_ptr
     render.InitCamera(angle, viewer);
     render.RenderPointCloud(viewer, filtered_cloud_ptr_, "PointCloud", Color(1,0,0));
 
-    viewer->spinOnce();
+    while (!viewer->wasStopped()) {
+        viewer->spinOnce(100);
+        boost::this_thread::sleep(boost::posix_time::microseconds(1000));
+    }
 }

@@ -48,7 +48,7 @@ public:
     void VoxelGridFilter(pcl_util::PointCloudPtr &in_cloud_ptr, pcl_util::PointCloudPtr &out_cloud_ptr, float leaf_size);
     void EuclCluster(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<pcl_util::PointCloud> &object_cloud);
     void ClusterThread(pcl_util::PointCloudPtr &in_cloud_ptr, float max_cluster_distance, std::vector<pcl_util::PointCloud> &object_cloud);
-    void Process(pcl_util::PointCloudPtr &in_cloud_ptr, pcl_util::PointCloudPtr &out_cloud_ptr);
+    void Process(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<pcl_util::PointCloud> &object_point_cloud);
 
 private:
     std::shared_ptr<Segment> segment_;
