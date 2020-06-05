@@ -28,10 +28,10 @@ public:
     BBoxEstimator();
     ~BBoxEstimator();
 
-    bool Estimate(pcl_util::PointCloudPtr &in_cloud_ptr, pcl_util::BBox &box);
+    bool SearchBasedFitting(pcl_util::PointCloudPtr &in_cloud_ptr, pcl_util::BBox &box);
 
 private:
-    double CalcCloseness(const std::vector<double> &C_1, const std::vector<double> &C_2);
+    double CalcCloseness(const std::vector<float> &C_1, const std::vector<float> &C_2);
 
 };
 
