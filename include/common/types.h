@@ -39,4 +39,18 @@ private:
     float b_;
 };
 
+struct BBox{
+    float x;
+    float y;
+    float z;
+    float dx;
+    float dy;
+    float dz;
+    float yaw;
+
+    float centroid_x;
+    float centroid_y;
+    float centroid_z;
+};
+
 #endif //PERCEPTION_ROS_TYPES_H

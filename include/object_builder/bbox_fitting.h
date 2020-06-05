@@ -23,16 +23,20 @@ as well as in the event of applications for industrial property rights.
 #include "common/logging.h"
 #include "common/pcl_types.h"
 
+extern Logging logger;
+
 class BBoxEstimator{
 public:
     BBoxEstimator();
     ~BBoxEstimator();
 
-    bool SearchBasedFitting(pcl_util::PointCloudPtr &in_cloud_ptr, pcl_util::BBox &box);
+    void Estimate(std::vector<pcl_util::PointCloud> clusters, std::vector<BBox> bboxes);
 
 private:
-    double CalcCloseness(const std::vector<float> &C_1, const std::vector<float> &C_2);
-
+    bool SearchBasedFitting(pcl_util::PointCloudPtr &in_cloud_ptr, BBox &box);
+    float CalcCloseness(const std::vector<float> &C_1, const std::vector<float> &C_2);
+    bool CalcBBox(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<std::pair<float, float>> &Q, float dz, BBox &box);
+    Eigen::Array3f CalcCloudCentroid(pcl_util::PointCloudPtr &in_cloud_ptr);
 };
 
 

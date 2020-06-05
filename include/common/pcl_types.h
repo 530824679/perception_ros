@@ -61,20 +61,6 @@ namespace pcl_util{
 
     typedef pcl::KdTreeFLANN<Point> KdTree;
 
-    struct BBox{
-        float x;
-        float y;
-        float z;
-        float length;
-        float width;
-        float height;
-        float yaw;
-
-        float centroid_x;
-        float centroid_y;
-        float centroid_z;
-    };
-
 }
 
 #endif //PERCEPTION_ROS_PCL_TYPES_H
