@@ -10,7 +10,15 @@ BBoxEstimator::~BBoxEstimator(){
 }
 
 void BBoxEstimator::Estimate(std::vector<pcl_util::PointCloud> clusters, std::vector<BBox> bboxes){
+    for (int i = 0; i < clusters.size(); i++) {
+        auto cluster = clusters[i];
+        BBox box{};
+        if (SearchBasedFitting(cluster.makeShared(), box)){
 
+        }else{
+            logger.Log(ERROR, "Search Based Fitting false.\n");
+        }
+    }
 }
 
 bool BBoxEstimator::SearchBasedFitting(pcl_util::PointCloudPtr &in_cloud_ptr, BBox &box) {
