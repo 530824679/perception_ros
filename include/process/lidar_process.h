@@ -63,6 +63,7 @@ as well as in the event of applications for industrial property rights.
 #include "calibration/calibrate.h"
 #include "curb_detect/curb_detect.h"
 #include "segmentation/object_cluster.h"
+#include "object_builder/bbox_fitting.h"
 #include "common/pcl_types.h"
 #include "common/logging.h"
 #include "render/render.h"
@@ -82,12 +83,14 @@ public:
 
 private:
     void ProcessPointCloud(const pcl_util::PointCloudPtr &in_cloud_ptr);
+    pcl_util::PCLVisualizerPtr CloudViewer();
 
 private:
     // Sub module ptr
     std::shared_ptr<ROIFilter> roi_filter_;
     std::shared_ptr<Calibrate> calibrate_;
-    std::shared_ptr<Cluster> object_cluster_;
+    std::shared_ptr<Cluster> cluster_;
+    std::shared_ptr<BBoxEstimator> bbox_estimator_;
 
     // Point clouds
     pcl_util::PointCloudPtr filtered_cloud_ptr_;
@@ -110,6 +113,10 @@ private:
     ros::Publisher bbox_publisher_;
     ros::Publisher velocity_publisher_;
 
+    // Visualize
+    pcl_util::PCLVisualizerPtr viewer_;
+    CameraAngle angle_;
+    Render render_;
 };
 
 

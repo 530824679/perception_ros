@@ -1,7 +1,6 @@
 
 #include "process/lidar_process.h"
 
-
 LidarProcess::LidarProcess(ros::NodeHandle node, std::string config_path){
     // Initialze Config Params
     Init(config_path);
@@ -36,13 +35,14 @@ LidarProcess::LidarProcess(ros::NodeHandle node, std::string config_path){
     bbox_publisher_ = node.advertise<visualization_msgs::Marker>("lidar_bbox_marker", 1);
     velocity_publisher_ = node.advertise<visualization_msgs::MarkerArray>("lidar_velocity_marker", 1);
 
+    viewer_ = CloudViewer();
 }
 
 LidarProcess::LidarProcess(std::string config_path){
     // Initialze Config Params
     Init(config_path);
     pcl_util::PointCloudPtr in_cloud_ptr(new pcl_util::PointCloud);
-    if (pcl::io::loadPCDFile<pcl_util::Point>("/home/chenwei/bag/pcd/400.pcd", *in_cloud_ptr) == -1) {
+    if (pcl::io::loadPCDFile<pcl_util::Point>("/home/chenwei/detection/lidar_perception_ros/data/pcd/800.pcd", *in_cloud_ptr) == -1) {
         PCL_ERROR("PCD file reading failed.");
         return;
     }
@@ -52,6 +52,14 @@ LidarProcess::LidarProcess(std::string config_path){
 
 LidarProcess::~LidarProcess(){
 
+}
+
+pcl_util::PCLVisualizerPtr LidarProcess::CloudViewer() {
+    pcl::visualization::PCLVisualizer::Ptr viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
+    angle_ = TopDown;
+    render_.InitCamera(angle_, viewer);
+
+    return viewer;
 }
 
 bool LidarProcess::Init(std::string &config_path) {
@@ -82,11 +90,18 @@ bool LidarProcess::Init(std::string &config_path) {
 
         // segmentation
         std::string segmentation_config = "segmentation";
-        object_cluster_ = std::make_shared<Cluster>();
-        if (!object_cluster_->Init(root, segmentation_config)){
+        cluster_ = std::make_shared<Cluster>();
+        if (!cluster_->Init(root, segmentation_config)){
             logger.Log(WARNING, "[%s]: Init segment object failed.\n", __func__);
         }
         logger.Log(INFO, "[%s]: Init successfully, segment object.\n", __func__);
+
+        // object_builder
+        std::string bbox_estimator_config = "bbox_estimator";
+        bbox_estimator_  = std::make_shared<BBoxEstimator>();
+
+
+
 
         return true;
     }else{
@@ -132,8 +147,11 @@ void LidarProcess::ProcessPointCloud(const pcl_util::PointCloudPtr &in_cloud_ptr
     pcl_util::PointCloudPtr calibrate_cloud_all_ptr(new pcl_util::PointCloud());
     calibrate_->Correct(filter_cloud_all_ptr, calibrate_cloud_all_ptr);
 
-    std::vector<pcl_util::PointCloud> object_point_cloud;
-    object_cluster_->Process(filter_cloud_all_ptr, object_point_cloud);
+    std::vector<pcl_util::PointCloud> cluster_cloud_vec;
+    cluster_->Process(filter_cloud_all_ptr, cluster_cloud_vec);
+
+    std::vector<BBox> bboxes;
+    bbox_estimator_->Estimate(cluster_cloud_vec, bboxes);
 
 
 
@@ -153,14 +171,20 @@ void LidarProcess::ProcessPointCloud(const pcl_util::PointCloudPtr &in_cloud_ptr
 
 
     // TMP Visualization
-    pcl_util::PCLVisualizerPtr viewer (new pcl_util::PCLVisualizer("3D Viewer"));
-    CameraAngle angle = TopDown;
-    Render render;
-    render.InitCamera(angle, viewer);
-    render.RenderPointCloud(viewer, filtered_cloud_ptr_, "PointCloud", Color(1,0,0));
+    viewer_->removeAllPointClouds();
+    viewer_->removeAllShapes();
 
-    while (!viewer->wasStopped()) {
-        viewer->spinOnce(100);
-        boost::this_thread::sleep(boost::posix_time::microseconds(1000));
+    render_.RenderPointCloud(viewer_, filter_cloud_all_ptr, "PointCloud", Color(1,0,0));
+
+    int clusterid = 0;
+    for (size_t i = 0; i < bboxes.size(); i++) {
+        render_.RenderBBox(viewer_, bboxes[i], clusterid, Color(0,1,0));
+        clusterid++;
     }
+
+    viewer_->spinOnce();
+//    while (!viewer->wasStopped()) {
+//        viewer->spinOnce(100);
+//        boost::this_thread::sleep(boost::posix_time::microseconds(1000));
+//    }
 }

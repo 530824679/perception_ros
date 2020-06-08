@@ -33,7 +33,7 @@ public:
 
     void InitCamera(CameraAngle angle, pcl_util::PCLVisualizerPtr &viewer);
     void RenderPointCloud(pcl_util::PCLVisualizerPtr &viewer, const pcl_util::PointCloudPtr &cloud, std::string name, Color color = Color(1,1,1));
-
+    void RenderBBox(pcl_util::PCLVisualizerPtr &viewer, BBox box, int id, Color color);
 };
 
 
