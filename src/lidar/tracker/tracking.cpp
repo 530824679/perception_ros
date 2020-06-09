@@ -162,7 +162,7 @@ int Tracking::track(std::map<int, Tracker> &tracks, std::vector<cv::Rect> detect
 
     // Delete lose tracked tracks
     for (auto it = tracks.begin(); it != tracks.end();) {
-        if (it->second.coast_cycles_ > max_coast_cycles_) {
+        if (it->second.GetCoastCycles() > max_coast_cycles_) {
             it = tracks.erase(it);
         } else {
             it++;

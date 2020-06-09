@@ -37,6 +37,9 @@ public:
     cv::Rect GetStateAsBbox() const;
     float GetNIS() const;
 
+    int GetCoastCycles();
+    int GetHitStreak();
+
 private:
     Eigen::VectorXd ConvertBboxToObservation(const cv::Rect& bbox) const;
     cv::Rect ConvertStateToBbox(const Eigen::VectorXd &state) const;

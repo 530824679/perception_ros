@@ -101,3 +101,11 @@ cv::Rect Tracker::ConvertStateToBbox(const Eigen::VectorXd &state) const{
     cv::Rect rect(cv::Point(tl_x, tl_y), cv::Size(width, height));
     return rect;
 }
+
+int Tracker::GetCoastCycles(){
+    return coast_cycles_;
+}
+
+int Tracker::GetHitStreak(){
+    return hit_streak_;
+}
