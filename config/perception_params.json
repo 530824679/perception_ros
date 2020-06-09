@@ -25,8 +25,13 @@
     "threshold": 0.3,
     "abs_height": 0.1,
     "min_cluster_size": 3,
-    "max_cluster_size": 2500,
+    "max_cluster_size": 5000,
     "seg_distance": [10, 20, 30],
     "cluster_scale": [0.4, 0.6, 0.8, 1.0]
+  },
+  "tracker" : {
+    "max_coast_cycles": 5,
+    "min_hits": 3,
+    "min_confidence": 0.6
   }
 }
