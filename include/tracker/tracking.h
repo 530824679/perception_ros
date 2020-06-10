@@ -38,6 +38,7 @@ public:
     Tracking();
     ~Tracking();
 
+    void Process(std::vector<BBox> bboxes);
     bool Init(Json::Value params, std::string key);
     float CalculateIou(const cv::Rect& det, const Tracker& track);
     void HungarianMatching(const std::vector<std::vector<float>>& iou_matrix, size_t nrows, size_t ncols, std::vector<std::vector<float>>& association);

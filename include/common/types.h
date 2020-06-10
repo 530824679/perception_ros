@@ -26,6 +26,20 @@ enum CameraAngle{
     FPS
 };
 
+enum Category{
+    UNKNOWN = 0,
+    PEDESTRIAN = 1,
+    MOTOR = 2,
+    CAR = 3,
+    TRUCK = 4
+};
+
+enum Moion{
+    MOTION_UNKNOWN = 0,
+    MOTION_MOVING = 1,
+    MOTION_STATIONARY = 2
+};
+
 struct Color{
 public:
     Color(float r, float g, float b):r_(r), g_(g), b_(b){};

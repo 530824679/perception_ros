@@ -16,7 +16,7 @@
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
  */
 
-#include "matrix.h"
+#include "common/matrix.h"
 
 #include <cassert>
 #include <cstdlib>
@@ -122,7 +122,7 @@ void
 Matrix<T>::resize(const size_t rows, const size_t columns, const T default_value) {
 
     if(rows<0&&columns<0){
-        ROS_WARN("Columns and rows must exist.");
+        std::cout << "Columns and rows must exist." << std::endl;
         return;
     }
     //std::cout<<"rows:"<<rows<<"columns:"<<columns<<std::endl;
@@ -215,12 +215,12 @@ Matrix<T>::min() const {
   //assert ( m_columns > 0 );
 
   if(m_rows<0){
-      ROS_WARN("Columns and rows must exist.");
+      std::cout << "Columns and rows must exist." << std::endl;
       return 0;
   }
   //assert ( m_rows > 0 );
   if(m_columns<0){
-      ROS_WARN("Columns and rows must exist.");
+      std::cout << "Columns and rows must exist." << std::endl;
       return 0;
   }
 
@@ -241,12 +241,12 @@ const T
 Matrix<T>::max() const {
   assert( m_matrix != nullptr );
   if(m_rows<0){
-      ROS_WARN("Columns and rows must exist.");
+      std::cout << "Columns and rows must exist." << std::endl;
       return 0;
   }
   //assert ( m_rows > 0 );
   if(m_columns<0){
-      ROS_WARN("Columns and rows must exist.");
+      std::cout << "Columns and rows must exist." << std::endl;
       return 0;
   }
   //assert ( m_columns > 0 );

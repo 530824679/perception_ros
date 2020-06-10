@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
     std_msgs
     sensor_msgs
     message_filters
+    message_generation
 )
 
 find_package(OpenMP REQUIRED)
@@ -35,10 +36,20 @@ if(OpenCV_FOUND)
     add_definitions(${OpenCV_DEFINITIONS})
 endif ()
 
+add_message_files(
+    FILES
+    ObjectInfo.msg
+    ObjectInfoArray.msg
+)
+
+generate_messages(
+    DEPENDENCIES
+    std_msgs
+)
 
 catkin_package(
     INCLUDE_DIRS include
-    CATKIN_DEPENDS roscpp rosbag std_msgs sensor_msgs message_filters
+    CATKIN_DEPENDS roscpp rosbag std_msgs sensor_msgs message_filters message_runtime
 )
 
 include_directories(

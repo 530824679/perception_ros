@@ -8,6 +8,28 @@ Tracking::~Tracking() {
 
 }
 
+void Tracking::Process(std::vector<BBox> bboxes){
+
+//    std::vector<cv::Rect> detections;
+//
+//    cv::Rect rectange;
+//    for(int i=0;i<num;i++){
+//        rectange.x=obj[i].leftTopX;
+//        rectange.y=obj[i].leftTopY;
+//        rectange.height=obj[i].rightBottomY-obj[i].leftTopY;
+//        rectange.width=obj[i].rightBottomX-obj[i].leftTopX;
+//        if(rectange.height>0&&rectange.width>0){
+//
+//        }
+//        detections.push_back(rectange);
+//        cv::rectangle(srcImage, rectange, cv::Scalar(0, 0, 255), 2);
+//    }
+//
+//    track(tracks,detections,frame_index,current_ID,sensorFusion_msg,num,gnssInput,srcImage);
+//
+//    frame_index++;
+}
+
 bool Tracking::Init(Json::Value params, std::string key){
     if(params.isMember(key)) {
         Json::Value tracker_param = params[key];

@@ -22,7 +22,6 @@
 #include <initializer_list>
 #include <cstdlib>
 #include <iostream>
-#include "ros/ros.h"
 
 
 template <class T>
@@ -66,10 +65,10 @@ private:
   size_t m_columns;
 };
 
-#ifndef USE_EXPORT_KEYWORD
-#include "matrix.cpp"
-//#define export /*export*/
-#endif
+//#ifndef USE_EXPORT_KEYWORD
+//#include "common/matrix.cpp"
+////#define export /*export*/
+//#endif
 
 #endif /* !defined(_MATRIX_H_) */
 
