@@ -68,6 +68,9 @@ as well as in the event of applications for industrial property rights.
 #include "common/logging.h"
 #include "render/render.h"
 
+// msg include
+#include "perception_ros/ObjectInfoArray.h"
+
 extern Logging logger;
 
 class LidarProcess {

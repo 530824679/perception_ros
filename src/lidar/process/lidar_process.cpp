@@ -129,6 +129,10 @@ void LidarProcess::ProcessLidarData(const pcl_util::PointCloudPtr &in_cloud_ptr)
 
     ProcessPointCloud(in_cloud_ptr);
 
+
+
+
+
 //    filtered_cloud_publisher_.publish(filtered_cloud_ptr_);
 //    filtered_cloud_objects_publisher_.publish(filtered_cloud_objects_ptr_);
 //    filtered_cloud_ground_publisher_.publish(filtered_cloud_ground_ptr_);
@@ -159,7 +163,7 @@ void LidarProcess::ProcessPointCloud(const pcl_util::PointCloudPtr &in_cloud_ptr
     std::chrono::duration<double, std::milli> fp_ms = end - start;
     std::cout << "Done! Took " << fp_ms.count() << "ms\n";
 
-
+    ObjectInfoArray object_array;
 
 
 
