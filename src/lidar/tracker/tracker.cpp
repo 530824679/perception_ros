@@ -46,6 +46,10 @@ Tracker::Tracker() : kf_(8, 4), coast_cycles_(0), hit_streak_(0){
             0, 0, 0,  10;
 }
 
+Tracker::~Tracker(){
+
+}
+
 void Tracker::Predict() {
     kf_.Predict();
 

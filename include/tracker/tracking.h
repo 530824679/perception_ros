@@ -25,7 +25,6 @@ as well as in the event of applications for industrial property rights.
 
 // local include
 #include "common/logging.h"
-#include "common/matrix.h"
 #include "munkres.h"
 #include "tracker.h"
 
@@ -48,7 +47,7 @@ public:
                                        std::map<int, BBox>& matched,
                                        std::vector<BBox>& unmatched_det,
                                        float iou_threshold = 0.2);
-    int track(std::map<int, Tracker> &tracks, std::vector<BBox> bboxes, int frame_index, int& current_id, perception_ros::ObjectInfoArray &object_array);
+    int track(std::map<int, Tracker> &tracks, std::vector<BBox> bboxes, int frame_index, int& current_id, perception_ros::ObjectInfoArray &object_array_msg);
 
 private:
     std::map<int, Tracker> tracks_;

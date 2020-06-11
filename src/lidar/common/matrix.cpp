@@ -16,6 +16,9 @@
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
  */
 
+#ifndef _MATRIX_CPP_
+#define _MATRIX_CPP_
+
 #include "common/matrix.h"
 
 #include <cassert>
@@ -122,7 +125,7 @@ void
 Matrix<T>::resize(const size_t rows, const size_t columns, const T default_value) {
 
     if(rows<0&&columns<0){
-        std::cout << "Columns and rows must exist." << std::endl;
+        logger.Log(ERROR, "[%s]: Columns and rows must exist.\n", __func__);
         return;
     }
     //std::cout<<"rows:"<<rows<<"columns:"<<columns<<std::endl;
@@ -215,12 +218,12 @@ Matrix<T>::min() const {
   //assert ( m_columns > 0 );
 
   if(m_rows<0){
-      std::cout << "Columns and rows must exist." << std::endl;
+      logger.Log(ERROR, "[%s]: Columns and rows must exist.\n", __func__);
       return 0;
   }
   //assert ( m_rows > 0 );
   if(m_columns<0){
-      std::cout << "Columns and rows must exist." << std::endl;
+      logger.Log(ERROR, "[%s]: Columns and rows must exist.\n", __func__);
       return 0;
   }
 
@@ -241,12 +244,12 @@ const T
 Matrix<T>::max() const {
   assert( m_matrix != nullptr );
   if(m_rows<0){
-      std::cout << "Columns and rows must exist." << std::endl;
+      logger.Log(ERROR, "[%s]: Columns and rows must exist.\n", __func__);
       return 0;
   }
   //assert ( m_rows > 0 );
   if(m_columns<0){
-      std::cout << "Columns and rows must exist." << std::endl;
+      logger.Log(ERROR, "[%s]: Columns and rows must exist.\n", __func__);
       return 0;
   }
   //assert ( m_columns > 0 );
@@ -260,3 +263,5 @@ Matrix<T>::max() const {
 
   return max;
 }
+
+#endif

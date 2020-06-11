@@ -144,7 +144,7 @@ void Tracking::AssociateDetectionsToTrackers(const std::vector<BBox> &bboxes,
     }
 }
 
-int Tracking::track(std::map<int, Tracker> &tracks, std::vector<BBox> bboxes, int frame_index, int &current_id, perception_ros::ObjectInfoArray &object_array) {
+int Tracking::track(std::map<int, Tracker> &tracks, std::vector<BBox> bboxes, int frame_index, int &current_id, perception_ros::ObjectInfoArray &object_array_msg) {
     for (auto &track : tracks){
         track.second.Predict();
     }
@@ -176,5 +176,20 @@ int Tracking::track(std::map<int, Tracker> &tracks, std::vector<BBox> bboxes, in
         }
     }
 
+    perception_ros::ObjectInfo object_info_msg;
+    int object_num = 0;
+    for (auto &trk : tracks) {
+        const auto &bbox = trk.second.GetStateAsBbox();
+        if (trk.second.GetCoastCycles() < 1 && trk.second.GetHitStreak() >= min_hits_){
+            object_info_msg.id = (uint16_t) trk.first;
+            object_info_msg.length = (uint16_t) bbox.dx;
+            object_info_msg.width = (uint16_t) bbox.dy;
+            object_info_msg.height = (uint16_t) bbox.dz;
+
+            object_array_msg.object_info[object_num] = object_info_msg;
+            object_num++;
+        }
+    }
+    object_array_msg.object_num = object_num;
 
 }

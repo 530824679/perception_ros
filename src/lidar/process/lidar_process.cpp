@@ -43,7 +43,7 @@ LidarProcess::LidarProcess(std::string config_path){
     // Initialze Config Params
     Init(config_path);
     pcl_util::PointCloudPtr in_cloud_ptr(new pcl_util::PointCloud);
-    if (pcl::io::loadPCDFile<pcl_util::Point>("/home/chenwei/detection/lidar_perception_ros/data/pcd/800.pcd", *in_cloud_ptr) == -1) {
+    if (pcl::io::loadPCDFile<pcl_util::Point>("/home/chenwei/detection/lidar_perception_ros/data/pcd/900.pcd", *in_cloud_ptr) == -1) {
         PCL_ERROR("PCD file reading failed.");
         return;
     }
@@ -193,8 +193,8 @@ void LidarProcess::ProcessPointCloud(const pcl_util::PointCloudPtr &in_cloud_ptr
     }
 
     viewer_->spinOnce();
-//    while (!viewer->wasStopped()) {
-//        viewer->spinOnce(100);
+//    while (!viewer_->wasStopped()) {
+//        viewer_->spinOnce(100);
 //        boost::this_thread::sleep(boost::posix_time::microseconds(1000));
 //    }
 }

@@ -23,6 +23,9 @@
 #include <cstdlib>
 #include <iostream>
 
+#include "common/logging.h"
+
+extern Logging logger;
 
 template <class T>
 class Matrix {
@@ -65,10 +68,10 @@ private:
   size_t m_columns;
 };
 
-//#ifndef USE_EXPORT_KEYWORD
-//#include "common/matrix.cpp"
-////#define export /*export*/
-//#endif
+#ifndef USE_EXPORT_KEYWORD
+#include "../../src/lidar/common/matrix.cpp"
+//#define export /*export*/
+#endif
 
 #endif /* !defined(_MATRIX_H_) */
 
