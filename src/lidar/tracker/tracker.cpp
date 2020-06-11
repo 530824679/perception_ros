@@ -1,7 +1,7 @@
 #include "tracker/tracker.h"
 
 Tracker::Tracker() : kf_(8, 4), coast_cycles_(0), hit_streak_(0){
-    // state - center_x, center_y, width, height, v_cx, v_cy, v_width, v_height
+    // state - center_x, center_y, length, width, v_cx, v_cy, v_length, v_width
     kf_.F_ <<
            1, 0, 0, 0, 1, 0, 0, 0,
             0, 1, 0, 0, 0, 1, 0, 0,
@@ -58,7 +58,7 @@ void Tracker::Predict() {
     coast_cycles_++;
 }
 
-void Tracker::Update(const cv::Rect& bbox) {
+void Tracker::Update(const BBox& bbox) {
     coast_cycles_ = 0;
     hit_streak_++;
 
@@ -67,12 +67,12 @@ void Tracker::Update(const cv::Rect& bbox) {
 }
 
 // Create and initialize new trackers for unmatched detections, with initial bounding box
-void Tracker::Init(const cv::Rect &bbox) {
+void Tracker::Init(const BBox &bbox) {
     kf_.x_.head(4) << ConvertBboxToObservation(bbox);
     hit_streak_++;
 }
 
-cv::Rect Tracker::GetStateAsBbox() const{
+BBox Tracker::GetStateAsBbox() const{
     return ConvertStateToBbox(kf_.x_);
 }
 
@@ -80,26 +80,27 @@ float Tracker::GetNIS() const {
     return kf_.NIS_;
 }
 
-Eigen::VectorXd Tracker::ConvertBboxToObservation(const cv::Rect& bbox) const{
+Eigen::VectorXd Tracker::ConvertBboxToObservation(const BBox& bbox) const{
     Eigen::VectorXd observation = Eigen::VectorXd::Zero(4);
-    auto width = static_cast<float>(bbox.width);
-    auto height = static_cast<float>(bbox.height);
+    auto length = static_cast<float>(bbox.dx);
+    auto width = static_cast<float>(bbox.dy);
 
-    float center_x = bbox.x + width / 2;
-    float center_y = bbox.y + height / 2;
+    float center_x = bbox.x;
+    float center_y = bbox.y;
 
-    observation << center_x, center_y, width, height;
+    observation << center_x, center_y, length, width;
     return observation;
 }
 
-cv::Rect Tracker::ConvertStateToBbox(const Eigen::VectorXd &state) const{
-    auto width = static_cast<int>(state[2]);
-    auto height = static_cast<int>(state[3]);
-    auto tl_x = static_cast<int>(state[0] - width / 2.0);
-    auto tl_y = static_cast<int>(state[1] - height / 2.0);
+BBox Tracker::ConvertStateToBbox(const Eigen::VectorXd &state) const{
+    BBox box;
+    box.x = static_cast<int>(state[0]);
+    box.y = static_cast<int>(state[1]);
 
-    cv::Rect rect(cv::Point(tl_x, tl_y), cv::Size(width, height));
-    return rect;
+    box.dx = static_cast<int>(state[2]);
+    box.dy = static_cast<int>(state[3]);
+
+    return box;
 }
 
 int Tracker::GetCoastCycles(){

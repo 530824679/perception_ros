@@ -54,17 +54,22 @@ private:
 };
 
 struct BBox{
+    // center point
     float x;
     float y;
     float z;
+
+    // dimension
     float dx;
     float dy;
     float dz;
+
+    // angle
     float yaw;
 
+    // centroid point
     float centroid_x;
     float centroid_y;
     float centroid_z;
 };
-
 #endif //PERCEPTION_ROS_TYPES_H

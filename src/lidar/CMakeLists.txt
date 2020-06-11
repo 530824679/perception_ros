@@ -1,8 +1,7 @@
 ########## common_lib ##########
 add_library(common_lib STATIC
         ${PROJECT_SOURCE_DIR}/src/lidar/common/logging.cpp
-        ${PROJECT_SOURCE_DIR}/src/lidar/common/matrix.cpp
-        tracker/munkres.cpp)
+        ${PROJECT_SOURCE_DIR}/src/lidar/common/matrix.cpp)
 
 ########## roi_filter_lib ##########
 add_library(roi_filter_lib STATIC
@@ -42,8 +41,6 @@ target_link_libraries(object_builder_lib
         common_lib
         ${PCL_LIBRARIES})
 
-
-
 ########## recognition_lib ##########
 
 
@@ -51,12 +48,12 @@ target_link_libraries(object_builder_lib
 
 ########## tracker_lib ##########
 add_library(tracker_lib STATIC
+        ${PROJECT_SOURCE_DIR}/src/lidar/tracker/munkres.cpp
         ${PROJECT_SOURCE_DIR}/src/lidar/tracker/kalman_filter.cpp
         ${PROJECT_SOURCE_DIR}/src/lidar/tracker/tracking.cpp
-        ${PROJECT_SOURCE_DIR}/src/lidar/tracker/tracker.cpp
-        ${PROJECT_SOURCE_DIR}/src/lidar/tracker/munkres.cpp)
+        ${PROJECT_SOURCE_DIR}/src/lidar/tracker/tracker.cpp)
 target_link_libraries(tracker_lib
-        ${OpenCV_LIBRARIES})
+        common_lib)
 
 ########## render lib ##########
 add_library(render_lib STATIC

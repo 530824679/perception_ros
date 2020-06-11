@@ -64,6 +64,7 @@ as well as in the event of applications for industrial property rights.
 #include "curb_detect/curb_detect.h"
 #include "segmentation/object_cluster.h"
 #include "object_builder/bbox_fitting.h"
+#include "tracker/tracking.h"
 #include "common/pcl_types.h"
 #include "common/logging.h"
 #include "render/render.h"
@@ -94,6 +95,7 @@ private:
     std::shared_ptr<Calibrate> calibrate_;
     std::shared_ptr<Cluster> cluster_;
     std::shared_ptr<BBoxEstimator> bbox_estimator_;
+    std::shared_ptr<Tracking> tracking_;
 
     // Point clouds
     pcl_util::PointCloudPtr filtered_cloud_ptr_;
@@ -103,6 +105,7 @@ private:
     // Markers for visualization
     visualization_msgs::Marker bbox_list_;
     visualization_msgs::MarkerArray velocity_list_;
+    perception_ros::ObjectInfoArray object_array_;
 
     // Subscriber
     ros::Subscriber lidar_subscriber_;
@@ -115,14 +118,12 @@ private:
     // Marker publisher
     ros::Publisher bbox_publisher_;
     ros::Publisher velocity_publisher_;
+    ros::Publisher object_publisher_;
 
     // Visualize
     pcl_util::PCLVisualizerPtr viewer_;
     CameraAngle angle_;
     Render render_;
 };
-
-
-
 
 #endif //PERCEPTION_ROS_LIDAR_PROCESS_H

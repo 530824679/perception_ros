@@ -34,6 +34,7 @@ LidarProcess::LidarProcess(ros::NodeHandle node, std::string config_path){
     filtered_cloud_ground_publisher_ = node.advertise<pcl_util::PointCloud>("lidar_filtered_ground", 1);
     bbox_publisher_ = node.advertise<visualization_msgs::Marker>("lidar_bbox_marker", 1);
     velocity_publisher_ = node.advertise<visualization_msgs::MarkerArray>("lidar_velocity_marker", 1);
+    object_publisher_ = node.advertise<perception_ros::ObjectInfoArray>("lidar_object_marker", 1);
 
     viewer_ = CloudViewer();
 }
@@ -100,8 +101,13 @@ bool LidarProcess::Init(std::string &config_path) {
         std::string bbox_estimator_config = "bbox_estimator";
         bbox_estimator_  = std::make_shared<BBoxEstimator>();
 
-
-
+        // object tracking
+        std::string tracking_config = "tracking";
+        tracking_  = std::make_shared<Tracking>();
+        if (!tracking_->Init(root, tracking_config)){
+            logger.Log(WARNING, "[%s]: Init tracking object failed.\n", __func__);
+        }
+        logger.Log(INFO, "[%s]: Init successfully, tracking object.\n", __func__);
 
         return true;
     }else{
@@ -127,8 +133,8 @@ void LidarProcess::ProcessLidarData(const pcl_util::PointCloudPtr &in_cloud_ptr)
     bbox_list_.colors.clear();
     velocity_list_.markers.clear();
 
-    ProcessPointCloud(in_cloud_ptr);
 
+    ProcessPointCloud(in_cloud_ptr);
 
 
 
@@ -158,12 +164,12 @@ void LidarProcess::ProcessPointCloud(const pcl_util::PointCloudPtr &in_cloud_ptr
     bbox_estimator_->Estimate(cluster_cloud_vec, bboxes);
 
 
+    //tracking_->Process(bboxes, object_array_);
 
     std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> fp_ms = end - start;
     std::cout << "Done! Took " << fp_ms.count() << "ms\n";
 
-    ObjectInfoArray object_array;
 
 
 

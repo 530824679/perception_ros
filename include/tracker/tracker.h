@@ -20,29 +20,27 @@ as well as in the event of applications for industrial property rights.
 #ifndef PERCEPTION_ROS_TRACKER_H
 #define PERCEPTION_ROS_TRACKER_H
 
-// opencv include
-#include <opencv2/core.hpp>
-
 // local include
 #include "kalman_filter.h"
+#include "common/types.h"
 
 class Tracker {
 public:
     Tracker();
     ~Tracker();
 
-    void Init(const cv::Rect& bbox);
+    void Init(const BBox& bbox);
     void Predict();
-    void Update(const cv::Rect& bbox);
-    cv::Rect GetStateAsBbox() const;
+    void Update(const BBox& bbox);
+    BBox GetStateAsBbox() const;
     float GetNIS() const;
 
     int GetCoastCycles();
     int GetHitStreak();
 
 private:
-    Eigen::VectorXd ConvertBboxToObservation(const cv::Rect& bbox) const;
-    cv::Rect ConvertStateToBbox(const Eigen::VectorXd &state) const;
+    Eigen::VectorXd ConvertBboxToObservation(const BBox& bbox) const;
+    BBox ConvertStateToBbox(const Eigen::VectorXd &state) const;
 
 private:
     KalmanFilter kf_;

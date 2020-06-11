@@ -1,33 +1,18 @@
 #include "tracker/tracking.h"
 
 Tracking::Tracking() {
-
+    frame_index_ = 1;
+    current_id_ = 1;
 }
 
 Tracking::~Tracking() {
 
 }
 
-void Tracking::Process(std::vector<BBox> bboxes){
+void Tracking::Process(std::vector<BBox> bboxes, perception_ros::ObjectInfoArray &object_array){
 
-//    std::vector<cv::Rect> detections;
-//
-//    cv::Rect rectange;
-//    for(int i=0;i<num;i++){
-//        rectange.x=obj[i].leftTopX;
-//        rectange.y=obj[i].leftTopY;
-//        rectange.height=obj[i].rightBottomY-obj[i].leftTopY;
-//        rectange.width=obj[i].rightBottomX-obj[i].leftTopX;
-//        if(rectange.height>0&&rectange.width>0){
-//
-//        }
-//        detections.push_back(rectange);
-//        cv::rectangle(srcImage, rectange, cv::Scalar(0, 0, 255), 2);
-//    }
-//
-//    track(tracks,detections,frame_index,current_ID,sensorFusion_msg,num,gnssInput,srcImage);
-//
-//    frame_index++;
+    track(tracks_, bboxes, frame_index_, current_id_, object_array);
+    frame_index_++;
 }
 
 bool Tracking::Init(Json::Value params, std::string key){
@@ -59,20 +44,20 @@ bool Tracking::Init(Json::Value params, std::string key){
     }
 }
 
-float Tracking::CalculateIou(const cv::Rect& det, const Tracker& track) {
+float Tracking::CalculateIou(const BBox& det, const Tracker& track) {
     auto trk = track.GetStateAsBbox();
 
-    auto xx1 = std::max(det.tl().x, trk.tl().x);
-    auto yy1 = std::max(det.tl().y, trk.tl().y);
-    auto xx2 = std::min(det.br().x, trk.br().x);
-    auto yy2 = std::min(det.br().y, trk.br().y);
-    auto w = std::max(0, xx2 - xx1);
-    auto h = std::max(0, yy2 - yy1);
+    auto xx1 = std::min((det.x + det.dx/2), (trk.x + trk.dx/2));
+    auto yy1 = std::min((det.y + det.dy/2), (trk.y + trk.dy/2));
+    auto xx2 = std::max((det.x - det.dx/2), (trk.x - det.dx/2));
+    auto yy2 = std::max((det.y - det.dy/2), (trk.y - det.dy/2));
+    auto l = std::max(0, int(xx2 - xx1));
+    auto w = std::max(0, int(yy2 - yy1));
 
-    float det_area = det.area();
-    float trk_area = trk.area();
+    float det_area = det.dx * det.dy;
+    float trk_area = trk.dx * trk.dy;
 
-    auto intersection_area = w * h;
+    auto intersection_area = l * w;
     float union_area = det_area + trk_area - intersection_area;
 
     auto iou = intersection_area / union_area;
@@ -106,45 +91,45 @@ void Tracking::HungarianMatching(const std::vector<std::vector<float>>& iou_matr
 
 }
 
-void Tracking::AssociateDetectionsToTrackers(const std::vector<cv::Rect>& detection,
+void Tracking::AssociateDetectionsToTrackers(const std::vector<BBox> &bboxes,
                                              std::map<int, Tracker>& tracks,
-                                             std::map<int, cv::Rect>& matched,
-                                             std::vector<cv::Rect>& unmatched_det,
+                                             std::map<int, BBox>& matched,
+                                             std::vector<BBox>& unmatched_det,
                                              float iou_threshold) {
     // Set all detection as unmatched if no tracks existing
     if (tracks.empty()) {
-        for (const auto& det : detection) {
+        for (const auto& det : bboxes) {
             unmatched_det.push_back(det);
         }
         return;
     }
 
     std::vector<std::vector<float>> iou_matrix;
-    iou_matrix.resize(detection.size(), std::vector<float>(tracks.size()));
+    iou_matrix.resize(bboxes.size(), std::vector<float>(tracks.size()));
 
     std::vector<std::vector<float>> association;
-    association.resize(detection.size(), std::vector<float>(tracks.size()));
+    association.resize(bboxes.size(), std::vector<float>(tracks.size()));
 
     // row - detection, column - tracks
-    for (size_t i = 0; i < detection.size(); i++) {
+    for (size_t i = 0; i < bboxes.size(); i++) {
         size_t j = 0;
         for (const auto& trk : tracks) {
-            iou_matrix[i][j] = CalculateIou(detection[i], trk.second);
+            iou_matrix[i][j] = CalculateIou(bboxes[i], trk.second);
             j++;
         }
     }
 
     // Find association
-    HungarianMatching(iou_matrix, detection.size(), tracks.size(), association);
+    HungarianMatching(iou_matrix, bboxes.size(), tracks.size(), association);
 
-    for (size_t i = 0; i < detection.size(); i++) {
+    for (size_t i = 0; i < bboxes.size(); i++) {
         bool matched_flag = false;
         size_t j = 0;
         for (const auto& trk : tracks) {
             if (0 == association[i][j]) {
                 // Filter out matched with low IOU
                 if (iou_matrix[i][j] >= 0.2) {
-                    matched[trk.first] = detection[i];
+                    matched[trk.first] = bboxes[i];
                     matched_flag = true;
                 }
                 // It builds 1 to 1 association, so we can break from here
@@ -154,19 +139,19 @@ void Tracking::AssociateDetectionsToTrackers(const std::vector<cv::Rect>& detect
         }
         // if detection cannot match with any tracks
         if (!matched_flag) {
-            unmatched_det.push_back(detection[i]);
+            unmatched_det.push_back(bboxes[i]);
         }
     }
 }
 
-int Tracking::track(std::map<int, Tracker> &tracks, std::vector<cv::Rect> detections, int frame_index, int &current_ID) {
+int Tracking::track(std::map<int, Tracker> &tracks, std::vector<BBox> bboxes, int frame_index, int &current_id, perception_ros::ObjectInfoArray &object_array) {
     for (auto &track : tracks){
         track.second.Predict();
     }
 
-    std::map<int, cv::Rect> matched;
-    std::vector<cv::Rect> unmatched_det;
-    AssociateDetectionsToTrackers(detections, tracks, matched, unmatched_det);
+    std::map<int, BBox> matched;
+    std::vector<BBox> unmatched_det;
+    AssociateDetectionsToTrackers(bboxes, tracks, matched, unmatched_det);
 
     // Update tracks with associated bbox
     for (const auto &match : matched) {
@@ -179,7 +164,7 @@ int Tracking::track(std::map<int, Tracker> &tracks, std::vector<cv::Rect> detect
         Tracker tracker;
         tracker.Init(det);
         // Create new track and generate new ID
-        tracks[current_ID++] = tracker;
+        tracks[current_id++] = tracker;
     }
 
     // Delete lose tracked tracks
