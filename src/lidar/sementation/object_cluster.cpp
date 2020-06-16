@@ -182,12 +182,12 @@ void Cluster::ClusterThread(pcl_util::PointCloudPtr &in_cloud_ptr, float max_clu
     }
 }
 
-void Cluster::Process(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<pcl_util::PointCloud> &cluster_cloud_vec){
+void Cluster::Process(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<pcl_util::PointCloud> &cluster_cloud_vec, pcl_util::PointCloudPtr &out_cloud_ptr){
     pcl_util::PointCloudPtr filter_cloud_ptr(new pcl_util::PointCloud());
     segment_->BuildGridMap(in_cloud_ptr, filter_cloud_ptr);
 
-    VoxelGridFilter(filter_cloud_ptr, filter_cloud_ptr, 0.05);
-    EuclCluster(filter_cloud_ptr, cluster_cloud_vec);
+    VoxelGridFilter(filter_cloud_ptr, out_cloud_ptr, 0.05);
+    EuclCluster(out_cloud_ptr, cluster_cloud_vec);
 
     int size = cluster_cloud_vec.size();
     for (int i = 0; i < size; ++i) {

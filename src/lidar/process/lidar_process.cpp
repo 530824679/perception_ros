@@ -43,10 +43,12 @@ LidarProcess::LidarProcess(std::string config_path){
     // Initialze Config Params
     Init(config_path);
     pcl_util::PointCloudPtr in_cloud_ptr(new pcl_util::PointCloud);
-    if (pcl::io::loadPCDFile<pcl_util::Point>("/home/chenwei/detection/lidar_perception_ros/data/pcd/900.pcd", *in_cloud_ptr) == -1) {
+    if (pcl::io::loadPCDFile<pcl_util::Point>("/home/chenwei/detection/lidar_perception_ros/data/pcd/800.pcd", *in_cloud_ptr) == -1) {
         PCL_ERROR("PCD file reading failed.");
         return;
     }
+
+    viewer_ = CloudViewer();
     ProcessLidarData(in_cloud_ptr);
 
 }
@@ -158,7 +160,9 @@ void LidarProcess::ProcessPointCloud(const pcl_util::PointCloudPtr &in_cloud_ptr
     calibrate_->Correct(filter_cloud_all_ptr, calibrate_cloud_all_ptr);
 
     std::vector<pcl_util::PointCloud> cluster_cloud_vec;
-    cluster_->Process(filter_cloud_all_ptr, cluster_cloud_vec);
+    // TMP
+    pcl_util::PointCloudPtr object_cloud_ptr(new pcl_util::PointCloud());
+    cluster_->Process(filter_cloud_all_ptr, cluster_cloud_vec, object_cloud_ptr);
 
     std::vector<BBox> bboxes;
     bbox_estimator_->Estimate(cluster_cloud_vec, bboxes);
@@ -184,7 +188,7 @@ void LidarProcess::ProcessPointCloud(const pcl_util::PointCloudPtr &in_cloud_ptr
     viewer_->removeAllPointClouds();
     viewer_->removeAllShapes();
 
-    render_.RenderPointCloud(viewer_, filter_cloud_all_ptr, "PointCloud", Color(1,0,0));
+    render_.RenderPointCloud(viewer_, object_cloud_ptr, "PointCloud", Color(1,0,0));
 
     int clusterid = 0;
     for (size_t i = 0; i < bboxes.size(); i++) {
@@ -192,9 +196,9 @@ void LidarProcess::ProcessPointCloud(const pcl_util::PointCloudPtr &in_cloud_ptr
         clusterid++;
     }
 
-    viewer_->spinOnce();
-//    while (!viewer_->wasStopped()) {
-//        viewer_->spinOnce(100);
-//        boost::this_thread::sleep(boost::posix_time::microseconds(1000));
-//    }
+    //viewer_->spinOnce();
+    while (!viewer_->wasStopped()) {
+        viewer_->spinOnce(100);
+        boost::this_thread::sleep(boost::posix_time::microseconds(1000));
+    }
 }

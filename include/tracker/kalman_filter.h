@@ -30,8 +30,8 @@ public:
 
     virtual void Coast();
     void Predict();
-    virtual Eigen::VectorXd PredictionToObservation(const Eigen::VectorXd &state);
     virtual void Update(const Eigen::VectorXd &z);
+    virtual Eigen::VectorXd PredictionToObservation(const Eigen::VectorXd &state);
     float CalculateLogLikelihood(const Eigen::VectorXd& y, const Eigen::MatrixXd& S);
 
 public:
