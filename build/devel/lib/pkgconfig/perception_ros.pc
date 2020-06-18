@@ -1,0 +1,8 @@
+prefix=/home/linuxidc/perception_ros/build/devel
+
+Name: perception_ros
+Description: Description of perception_ros
+Version: 0.0.0
+Cflags: -I/home/linuxidc/perception_ros/build/devel/include -I/home/linuxidc/perception_ros/include
+Libs: -L${prefix}/lib 
+Requires: roscpp rosbag std_msgs sensor_msgs message_filters message_runtime

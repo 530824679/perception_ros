@@ -72,4 +72,12 @@ struct BBox{
     float centroid_y;
     float centroid_z;
 };
+
+struct BBox2D{
+    float left_top_x;
+    float left_top_y;
+    float right_top_x;
+    float right_top_y;
+};
+
 #endif //PERCEPTION_ROS_TYPES_H

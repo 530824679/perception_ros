@@ -43,7 +43,7 @@ LidarProcess::LidarProcess(std::string config_path){
     // Initialze Config Params
     Init(config_path);
     pcl_util::PointCloudPtr in_cloud_ptr(new pcl_util::PointCloud);
-    if (pcl::io::loadPCDFile<pcl_util::Point>("/home/chenwei/detection/lidar_perception_ros/data/pcd/800.pcd", *in_cloud_ptr) == -1) {
+    if (pcl::io::loadPCDFile<pcl_util::Point>("/media/linuxidc/5d1fdaab-1568-48a9-8654-91a6a537a58f/dajiang/pcd/800.pcd", *in_cloud_ptr) == -1) {
         PCL_ERROR("PCD file reading failed.");
         return;
     }
@@ -165,7 +165,8 @@ void LidarProcess::ProcessPointCloud(const pcl_util::PointCloudPtr &in_cloud_ptr
     cluster_->Process(filter_cloud_all_ptr, cluster_cloud_vec, object_cloud_ptr);
 
     std::vector<BBox> bboxes;
-    bbox_estimator_->Estimate(cluster_cloud_vec, bboxes);
+    std::vector<BBox2D> bbox2des;
+    bbox_estimator_->Estimate(cluster_cloud_vec, bboxes,bbox2des);
 
 
     //tracking_->Process(bboxes, object_array_);
@@ -194,6 +195,12 @@ void LidarProcess::ProcessPointCloud(const pcl_util::PointCloudPtr &in_cloud_ptr
     for (size_t i = 0; i < bboxes.size(); i++) {
         render_.RenderBBox(viewer_, bboxes[i], clusterid, Color(0,1,0));
         clusterid++;
+    }
+    
+    int clusterid2d = 0;
+    for (size_t i = 0; i < bbox2des.size(); i++) {
+        render_.RenderBBox2D(viewer_, bbox2des[i], clusterid2d, Color(0,0,1));
+        clusterid2d++;
     }
 
     //viewer_->spinOnce();

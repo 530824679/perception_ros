@@ -1,0 +1,2 @@
+/usr/bin/ar qc ../../devel/lib/libsegmentation_lib.a  CMakeFiles/segmentation_lib.dir/sementation/object_segment.cpp.o CMakeFiles/segmentation_lib.dir/sementation/object_cluster.cpp.o
+/usr/bin/ranlib ../../devel/lib/libsegmentation_lib.a

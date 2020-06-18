@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/linuxidc/perception_ros/build/devel/setup.sh

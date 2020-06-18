@@ -1,0 +1,2 @@
+/usr/bin/ar qc ../../devel/lib/liblidar_perception_lib.a  CMakeFiles/lidar_perception_lib.dir/process/lidar_process.cpp.o
+/usr/bin/ranlib ../../devel/lib/liblidar_perception_lib.a

@@ -1,0 +1,2 @@
+/usr/bin/ar qc ../../devel/lib/libroi_filter_lib.a  CMakeFiles/roi_filter_lib.dir/roi_filter/roi_filter.cpp.o
+/usr/bin/ranlib ../../devel/lib/libroi_filter_lib.a

@@ -1,0 +1,2 @@
+/usr/bin/ar qc ../../devel/lib/libcommon_lib.a  CMakeFiles/common_lib.dir/common/logging.cpp.o CMakeFiles/common_lib.dir/common/matrix.cpp.o
+/usr/bin/ranlib ../../devel/lib/libcommon_lib.a

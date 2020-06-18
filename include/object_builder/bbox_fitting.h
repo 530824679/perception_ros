@@ -30,12 +30,12 @@ public:
     BBoxEstimator();
     ~BBoxEstimator();
 
-    void Estimate(std::vector<pcl_util::PointCloud> &clusters, std::vector<BBox> &bboxes);
-
+    //void Estimate(std::vector<pcl_util::PointCloud> &clusters, std::vector<BBox> &bboxes);
+    void Estimate(std::vector<pcl_util::PointCloud> &clusters, std::vector<BBox> &bboxes,std::vector<BBox2D> &bbox2des);
 private:
-    bool SearchBasedFitting(pcl_util::PointCloudPtr &&in_cloud_ptr, BBox &box);
+    bool SearchBasedFitting(pcl_util::PointCloudPtr &&in_cloud_ptr, BBox &box,BBox2D &box2d);
     float CalcCloseness(const std::vector<float> &C_1, const std::vector<float> &C_2);
-    bool CalcBBox(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<std::pair<float, float>> &Q, float dz, BBox &box);
+    bool CalcBBox(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<std::pair<float, float>> &Q, float dz, BBox &box,BBox2D &box2d);
     Eigen::Array3f CalcCloudCentroid(pcl_util::PointCloudPtr &in_cloud_ptr);
 };
 

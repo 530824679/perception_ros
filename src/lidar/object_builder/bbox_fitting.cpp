@@ -9,14 +9,16 @@ BBoxEstimator::~BBoxEstimator(){
 
 }
 
-void BBoxEstimator::Estimate(std::vector<pcl_util::PointCloud> &clusters, std::vector<BBox> &bboxes){
+void BBoxEstimator::Estimate(std::vector<pcl_util::PointCloud> &clusters, std::vector<BBox> &bboxes,std::vector<BBox2D> &bbox2des){
     int i = 0;
     for (int i = 0; i < clusters.size(); i++) {
         //if(i > 0) break;
         auto cluster = clusters[i];
         BBox box{};
-        if (SearchBasedFitting(cluster.makeShared(), box)){
+        BBox2D box2d{};
+        if (SearchBasedFitting(cluster.makeShared(), box,box2d)){
             bboxes.push_back(box);
+            bbox2des.push_back(box2d);
         }else{
             logger.Log(ERROR, "Search Based Fitting false.\n");
         }
@@ -24,7 +26,7 @@ void BBoxEstimator::Estimate(std::vector<pcl_util::PointCloud> &clusters, std::v
     }
 }
 
-bool BBoxEstimator::SearchBasedFitting(pcl_util::PointCloudPtr &&in_cloud_ptr, BBox &box) {
+bool BBoxEstimator::SearchBasedFitting(pcl_util::PointCloudPtr &&in_cloud_ptr, BBox &box,BBox2D &box2d) {
     float min_z = in_cloud_ptr->points.front().z;
     float max_z = in_cloud_ptr->points.front().z;
     for (auto &p: in_cloud_ptr->points){
@@ -55,7 +57,7 @@ bool BBoxEstimator::SearchBasedFitting(pcl_util::PointCloudPtr &&in_cloud_ptr, B
     }
 
     float dz = max_z - min_z;
-    bool ret = CalcBBox(in_cloud_ptr, Q, dz ,box);
+    bool ret = CalcBBox(in_cloud_ptr, Q, dz ,box,box2d);
     if (ret){
         return true;
     } else{
@@ -81,21 +83,23 @@ float BBoxEstimator::CalcCloseness(const std::vector<float> &C_1, const std::vec
     for (const auto& c_2_element : C_2)
     {
         const float v = std::min(max_c_2 - c_2_element, c_2_element - min_c_2);
-        D_2.push_back(v * v);
+        //D_2.push_back(v * v);
+        D_2.push_back(std::fabs(v));
     }
 
     const float d_min = 0.05;
-    const float d_max = 0.50;
+    //const float d_max = 0.50;
     float beta = 0;
     for (size_t i = 0; i < D_1.size(); ++i)
     {
-        const float d = std::min(std::max(std::min(D_1.at(i), D_2.at(i)), d_min), d_max);
+        //const float d = std::min(std::max(std::min(D_1.at(i), D_2.at(i)), d_min), d_max);
+        const float d = std::max(std::min(D_1.at(i), D_2.at(i)), d_min);
         beta += 1.0 / d;
     }
     return beta;
 }
 
-bool BBoxEstimator::CalcBBox(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<std::pair<float, float>> &Q, float dz, BBox &box){
+bool BBoxEstimator::CalcBBox(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<std::pair<float, float>> &Q, float dz, BBox &box,BBox2D &box2d){
     float theta_star;
     float max_q;
     for (size_t i = 0; i < Q.size(); ++i) {
@@ -121,7 +125,7 @@ bool BBoxEstimator::CalcBBox(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<
     const float max_C_1_star = *std::max_element(C_1_star.begin(), C_1_star.end());
     const float min_C_2_star = *std::min_element(C_2_star.begin(), C_2_star.end());
     const float max_C_2_star = *std::max_element(C_2_star.begin(), C_2_star.end());
-
+    
     const float a_1 = std::cos(theta_star);
     const float b_1 = std::sin(theta_star);
     const float c_1 = min_C_1_star;
@@ -140,6 +144,11 @@ bool BBoxEstimator::CalcBBox(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<
     float intersection_y_1 = (a_1 * c_2 - a_2 * c_1) / (a_1 * b_2 - a_2 * b_1);
     float intersection_x_2 = (b_3 * c_4 - b_4 * c_3) / (a_4 * b_3 - a_3 * b_4);
     float intersection_y_2 = (a_3 * c_4 - a_4 * c_3) / (a_3 * b_4 - a_4 * b_3);
+
+    box2d.left_top_x=intersection_x_1;
+    box2d.left_top_y=intersection_y_1;
+    box2d.right_top_x=intersection_x_2;
+    box2d.right_top_y=intersection_y_2;
 
     // calc dimention of bounding box
     Eigen::Vector2d e_x;

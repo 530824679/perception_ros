@@ -45,3 +45,17 @@ void Render::RenderBBox(pcl_util::PCLVisualizerPtr &viewer, BBox box, int id, Co
     viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, color.GetR(), color.GetG(), color.GetB(), cube);
     viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 1, cube);
 }
+
+void Render::RenderBBox2D(pcl_util::PCLVisualizerPtr &viewer, BBox2D box2d, int id, Color color){
+    std::string line = "line" + std::to_string(id);
+    
+    // Eigen::Vector4f top_left;
+    // Eigen::Vector3f bottom_right;
+    // top_left<<box2d.left_top_x,box2d.left_top_y,0;
+    // bottom_right<<box2d.right_top_x,box2d.right_top_y,0;
+    viewer->addLine(pcl::PointXYZ(box2d.left_top_x,box2d.left_top_y,0),pcl::PointXYZ(box2d.right_top_x,box2d.right_top_y,0),line);
+    //viewer->addLine(top_left,bottom_right,line);
+    viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_REPRESENTATION, pcl::visualization::PCL_VISUALIZER_REPRESENTATION_WIREFRAME, line);
+    viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, color.GetR(), color.GetG(), color.GetB(), line);
+    viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 1, line);
+}

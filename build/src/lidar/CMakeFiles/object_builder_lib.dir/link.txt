@@ -1,0 +1,2 @@
+/usr/bin/ar qc ../../devel/lib/libobject_builder_lib.a  CMakeFiles/object_builder_lib.dir/object_builder/bbox_fitting.cpp.o
+/usr/bin/ranlib ../../devel/lib/libobject_builder_lib.a

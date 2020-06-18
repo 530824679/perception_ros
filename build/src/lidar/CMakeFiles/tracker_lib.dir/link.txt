@@ -1,0 +1,2 @@
+/usr/bin/ar qc ../../devel/lib/libtracker_lib.a  CMakeFiles/tracker_lib.dir/tracker/munkres.cpp.o CMakeFiles/tracker_lib.dir/tracker/kalman_filter.cpp.o CMakeFiles/tracker_lib.dir/tracker/tracker.cpp.o CMakeFiles/tracker_lib.dir/tracker/tracking.cpp.o
+/usr/bin/ranlib ../../devel/lib/libtracker_lib.a
