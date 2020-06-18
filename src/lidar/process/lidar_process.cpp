@@ -43,7 +43,7 @@ LidarProcess::LidarProcess(std::string config_path){
     // Initialze Config Params
     Init(config_path);
     pcl_util::PointCloudPtr in_cloud_ptr(new pcl_util::PointCloud);
-    if (pcl::io::loadPCDFile<pcl_util::Point>("/media/linuxidc/5d1fdaab-1568-48a9-8654-91a6a537a58f/dajiang/pcd/800.pcd", *in_cloud_ptr) == -1) {
+    if (pcl::io::loadPCDFile<pcl_util::Point>("/media/linuxidc/5d1fdaab-1568-48a9-8654-91a6a537a58f/dajiang/pcd/530.pcd", *in_cloud_ptr) == -1) {
         PCL_ERROR("PCD file reading failed.");
         return;
     }
@@ -189,7 +189,13 @@ void LidarProcess::ProcessPointCloud(const pcl_util::PointCloudPtr &in_cloud_ptr
     viewer_->removeAllPointClouds();
     viewer_->removeAllShapes();
 
-    render_.RenderPointCloud(viewer_, object_cloud_ptr, "PointCloud", Color(1,0,0));
+
+    for (int i = 0; i < cluster_cloud_vec.size(); ++i) {
+        float random_r = rand() % 10 / (float)10.0;
+        float random_g = rand() % 10 / (float)10.0;
+        float random_b = rand() % 10 / (float)10.0;
+        render_.RenderPointCloud(viewer_, cluster_cloud_vec[i].makeShared(), "PointCloud"+std::to_string(i), Color(random_r,random_g,random_b));
+    }
 
     int clusterid = 0;
     for (size_t i = 0; i < bboxes.size(); i++) {

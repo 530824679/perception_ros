@@ -22,7 +22,7 @@ void BBoxEstimator::Estimate(std::vector<pcl_util::PointCloud> &clusters, std::v
         }else{
             logger.Log(ERROR, "Search Based Fitting false.\n");
         }
-        i++;
+
     }
 }
 
@@ -83,17 +83,16 @@ float BBoxEstimator::CalcCloseness(const std::vector<float> &C_1, const std::vec
     for (const auto& c_2_element : C_2)
     {
         const float v = std::min(max_c_2 - c_2_element, c_2_element - min_c_2);
-        //D_2.push_back(v * v);
         D_2.push_back(std::fabs(v));
     }
 
     const float d_min = 0.05;
-    //const float d_max = 0.50;
+    const float d_max = 0.50;
     float beta = 0;
     for (size_t i = 0; i < D_1.size(); ++i)
     {
-        //const float d = std::min(std::max(std::min(D_1.at(i), D_2.at(i)), d_min), d_max);
-        const float d = std::max(std::min(D_1.at(i), D_2.at(i)), d_min);
+        const float d = std::min(std::max(std::min(D_1.at(i), D_2.at(i)), d_min), d_max);
+        //const float d = std::max(std::min(D_1.at(i), D_2.at(i)), d_min);
         beta += 1.0 / d;
     }
     return beta;
@@ -158,7 +157,8 @@ bool BBoxEstimator::CalcBBox(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<
     Eigen::Vector2d diagonal_vec;
     diagonal_vec << intersection_x_1 - intersection_x_2, intersection_y_1 - intersection_y_2;
 
-    box.yaw = std::atan2(e_1_star.y(), e_1_star.x());
+    box.yaw =   M_PI-theta_star;
+    //box.yaw = std::atan2(e_1_star.y(), e_1_star.x());
     box.x = (intersection_x_1 + intersection_x_2) / 2.0;
     box.y = (intersection_y_1 + intersection_y_2) / 2.0;
     box.z = CalcCloudCentroid(in_cloud_ptr).z();
