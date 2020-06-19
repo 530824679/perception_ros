@@ -21,3 +21,6 @@ cmake-build-debug/*
 
 # ignore cmake release
 cmake-build-release/*
+
+# ignore build directory
+build/*
