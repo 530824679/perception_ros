@@ -80,4 +80,28 @@ struct BBox2D{
     float right_top_y;
 };
 
+struct Speed{
+    float v_x;
+    float v_y;
+};
+
+struct Center{
+    float p_x;
+    float P_y;
+};
+
+struct VTracker{
+    float pre_v_x;//the velocity of last frame
+    float pre_v_y;
+    float v_x;//the velocity of now frame
+    float v_y;
+    float sum_v_x;//the sum of velocity during five frames
+    float sum_v_y;
+    float pre_p_x;//the center point of last frame
+    float pre_p_y;
+    float p_x;//the center point of last frame
+    float p_y;
+    int year;//the age of tracker
+};
+
 #endif //PERCEPTION_ROS_TYPES_H

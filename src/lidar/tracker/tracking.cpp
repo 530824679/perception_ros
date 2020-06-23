@@ -10,7 +10,7 @@ Tracking::~Tracking() {
 }
 
 void Tracking::Process(std::vector<BBox> bboxes, perception_ros::ObjectInfoArray &object_array){
-
+    std::cout<<"tracking"<< frame_index_<< "is start!"<<std::endl;
     track(tracks_, bboxes, frame_index_, current_id_, object_array);
     frame_index_++;
 }
@@ -128,7 +128,7 @@ void Tracking::AssociateDetectionsToTrackers(const std::vector<BBox> &bboxes,
         for (const auto& trk : tracks) {
             if (0 == association[i][j]) {
                 // Filter out matched with low IOU
-                if (iou_matrix[i][j] >= 0.2) {
+                if (iou_matrix[i][j] >= 0) {
                     matched[trk.first] = bboxes[i];
                     matched_flag = true;
                 }
@@ -180,12 +180,15 @@ int Tracking::track(std::map<int, Tracker> &tracks, std::vector<BBox> bboxes, in
     int object_num = 0;
     for (auto &trk : tracks) {
         const auto &bbox = trk.second.GetStateAsBbox();
-        if (trk.second.GetCoastCycles() < 1 && trk.second.GetHitStreak() >= min_hits_){
+        const auto &velocity=trk.second.GetStateAsVelocity();
+        bool state=trk.second.GetCoastCycles() < 5 && (trk.second.GetHitStreak() >= min_hits_||frame_index<min_hits_);
+        if (trk.second.GetCoastCycles() < 5 && (trk.second.GetHitStreak() >= min_hits_||frame_index<min_hits_)){
             object_info_msg.id = (uint16_t) trk.first;
             object_info_msg.length = (uint16_t) bbox.dx;
             object_info_msg.width = (uint16_t) bbox.dy;
             object_info_msg.height = (uint16_t) bbox.dz;
-
+            object_info_msg.velocity_xv=(int16_t)(velocity.v_x*256);
+            object_info_msg.velocity_yv=(int16_t)(velocity.v_y*256);
             object_array_msg.object_info[object_num] = object_info_msg;
             object_num++;
         }

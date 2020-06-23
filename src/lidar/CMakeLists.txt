@@ -51,7 +51,8 @@ add_library(tracker_lib STATIC
         ${PROJECT_SOURCE_DIR}/src/lidar/tracker/munkres.cpp
         ${PROJECT_SOURCE_DIR}/src/lidar/tracker/kalman_filter.cpp
         ${PROJECT_SOURCE_DIR}/src/lidar/tracker/tracker.cpp
-        ${PROJECT_SOURCE_DIR}/src/lidar/tracker/tracking.cpp)
+        ${PROJECT_SOURCE_DIR}/src/lidar/tracker/tracking.cpp
+        ${PROJECT_SOURCE_DIR}/src/lidar/tracker/velocity.cpp)
 target_link_libraries(tracker_lib
         common_lib)
 

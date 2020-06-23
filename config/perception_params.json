@@ -33,5 +33,9 @@
     "max_coast_cycles": 5,
     "min_hits": 3,
     "min_confidence": 0.6
+  },
+  "tracker"  : {
+    "lidar_rate":10,
+    "acceleration_threshold":20
   }
 }

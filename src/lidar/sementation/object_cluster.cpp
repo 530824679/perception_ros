@@ -190,8 +190,8 @@ void Cluster::Process(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<pcl_uti
     EuclCluster(out_cloud_ptr, cluster_cloud_vec);
 
     int size = cluster_cloud_vec.size();
-    for (int i = 0; i < size; ++i) {
-        logger.Log(INFO, "clusters size is [%d].\n", cluster_cloud_vec[i].points.size());
-    }
+    // for (int i = 0; i < size; ++i) {
+    //     logger.Log(INFO, "clusters size is [%d].\n", cluster_cloud_vec[i].points.size());
+    // }
 
 }
