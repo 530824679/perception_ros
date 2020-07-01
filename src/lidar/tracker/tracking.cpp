@@ -9,9 +9,9 @@ Tracking::~Tracking() {
 
 }
 
-void Tracking::Process(std::vector<BBox> bboxes, perception_ros::ObjectInfoArray &object_array){
-    std::cout<<"tracking"<< frame_index_<< "is start!"<<std::endl;
-    track(tracks_, bboxes, frame_index_, current_id_, object_array);
+void Tracking::Process(std::vector<BBox> bboxes, perception_ros::ObjectInfoArray &object_array,std::vector<InfoTracker>& trackerinfo){
+
+    track(tracks_, bboxes, frame_index_, current_id_, object_array,trackerinfo);
     frame_index_++;
 }
 
@@ -59,7 +59,6 @@ float Tracking::CalculateIou(const BBox& det, const Tracker& track) {
 
     auto intersection_area = l * w;
     float union_area = det_area + trk_area - intersection_area;
-
     auto iou = intersection_area / union_area;
     return iou;
 }
@@ -128,7 +127,7 @@ void Tracking::AssociateDetectionsToTrackers(const std::vector<BBox> &bboxes,
         for (const auto& trk : tracks) {
             if (0 == association[i][j]) {
                 // Filter out matched with low IOU
-                if (iou_matrix[i][j] >= 0) {
+                if (iou_matrix[i][j] >= 0) {//IOU threshold
                     matched[trk.first] = bboxes[i];
                     matched_flag = true;
                 }
@@ -144,7 +143,8 @@ void Tracking::AssociateDetectionsToTrackers(const std::vector<BBox> &bboxes,
     }
 }
 
-int Tracking::track(std::map<int, Tracker> &tracks, std::vector<BBox> bboxes, int frame_index, int &current_id, perception_ros::ObjectInfoArray &object_array_msg) {
+int Tracking::track(std::map<int, Tracker> &tracks, std::vector<BBox> bboxes, int frame_index, int &current_id, 
+                    perception_ros::ObjectInfoArray &object_array_msg,std::vector<InfoTracker>& trackerinfo) {
     for (auto &track : tracks){
         track.second.Predict();
     }
@@ -177,6 +177,7 @@ int Tracking::track(std::map<int, Tracker> &tracks, std::vector<BBox> bboxes, in
     }
 
     perception_ros::ObjectInfo object_info_msg;
+    InfoTracker tracker_info_msg;
     int object_num = 0;
     for (auto &trk : tracks) {
         const auto &bbox = trk.second.GetStateAsBbox();
@@ -184,14 +185,26 @@ int Tracking::track(std::map<int, Tracker> &tracks, std::vector<BBox> bboxes, in
         bool state=trk.second.GetCoastCycles() < 5 && (trk.second.GetHitStreak() >= min_hits_||frame_index<min_hits_);
         if (trk.second.GetCoastCycles() < 5 && (trk.second.GetHitStreak() >= min_hits_||frame_index<min_hits_)){
             object_info_msg.id = (uint16_t) trk.first;
+            object_info_msg.distance_xv=(uint16_t)bbox.x;
+            object_info_msg.distance_yv=(uint16_t)bbox.y;
             object_info_msg.length = (uint16_t) bbox.dx;
             object_info_msg.width = (uint16_t) bbox.dy;
-            object_info_msg.height = (uint16_t) bbox.dz;
+            object_info_msg.yaw=bbox.yaw;
             object_info_msg.velocity_xv=(int16_t)(velocity.v_x*256);
             object_info_msg.velocity_yv=(int16_t)(velocity.v_y*256);
             object_array_msg.object_info[object_num] = object_info_msg;
+
+            tracker_info_msg.id=(uint16_t) trk.first;
+            tracker_info_msg.x=bbox.x;
+            tracker_info_msg.y=bbox.y;
+            tracker_info_msg.z=1;
+            tracker_info_msg.length=bbox.dx;
+            tracker_info_msg.width=bbox.dy;
+            tracker_info_msg.height=2;
+            tracker_info_msg.yaw=M_PI/2-bbox.yaw;//here problem
             object_num++;
         }
+        trackerinfo.push_back(tracker_info_msg);
     }
     object_array_msg.object_num = object_num;
 

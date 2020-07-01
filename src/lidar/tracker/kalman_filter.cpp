@@ -41,13 +41,13 @@ void KalmanFilter::Update(const Eigen::VectorXd& z) {
 
     NIS_ = y.transpose() * S.inverse() * y;
 
-    Eigen::MatrixXd K = P_predict_ * Ht * S.inverse();
+    Eigen::MatrixXd K = P_predict_ * Ht * S.inverse();//gain of kalman
 
-    x_ = x_predict_ + K * y;
+    x_ = x_predict_ + K * y;//update gain
 
     Eigen::MatrixXd I = Eigen::MatrixXd::Identity(num_states_, num_states_);
 
-    P_ = (I - K * H_) * P_predict_;
+    P_ = (I - K * H_) * P_predict_;//update pk
 }
 
 float KalmanFilter::CalculateLogLikelihood(const Eigen::VectorXd& y, const Eigen::MatrixXd& S) {

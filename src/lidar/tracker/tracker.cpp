@@ -1,49 +1,57 @@
 #include "tracker/tracker.h"
 
-Tracker::Tracker() : kf_(8, 4),publish_velocity_(),coast_cycles_(0), hit_streak_(0),lidar_rate_(0),acc_threshold_(0){
-    // state - center_x, center_y, length, width, v_cx, v_cy, v_length, v_width
+Tracker::Tracker() : kf_(10, 5),publish_velocity_(),coast_cycles_(0), hit_streak_(0),lidar_rate_(0),acc_threshold_(0){
+    // state - center_x, center_y, length, width,yaw, v_cx, v_cy, v_length, v_width,v_yaw
     kf_.F_ <<
-           1, 0, 0, 0, 1, 0, 0, 0,
-            0, 1, 0, 0, 0, 1, 0, 0,
-            0, 0, 1, 0, 0, 0, 1, 0,
-            0, 0, 0, 1, 0, 0, 0, 1,
-            0, 0, 0, 0, 1, 0, 0, 0,
-            0, 0, 0, 0, 0, 1, 0, 0,
-            0, 0, 0, 0, 0, 0, 1, 0,
-            0, 0, 0, 0, 0, 0, 0, 1;
+            1, 0, 0, 0, 0, 1, 0, 0, 0, 0,
+            0, 1, 0, 0, 0, 0, 1, 0, 0, 0,
+            0, 0, 1, 0, 0, 0, 0, 1, 0, 0,
+            0, 0, 0, 1, 0, 0, 0, 0, 1, 0,
+            0, 0, 0, 0, 1, 0, 0, 0, 0, 1,
+            0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 1;
 
     // Give high uncertainty to the unobservable initial velocities
     kf_.P_ <<
-           10, 0, 0, 0, 0, 0, 0, 0,
-            0, 10, 0, 0, 0, 0, 0, 0,
-            0, 0, 10, 0, 0, 0, 0, 0,
-            0, 0, 0, 10, 0, 0, 0, 0,
-            0, 0, 0, 0, 10000, 0, 0, 0,
-            0, 0, 0, 0, 0, 10000, 0, 0,
-            0, 0, 0, 0, 0, 0, 10000, 0,
-            0, 0, 0, 0, 0, 0, 0, 10000;
+           10, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 10, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 10, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 10, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 10, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 10000, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0,10000, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 10000, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,10000, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 10000;
 
     kf_.H_ <<
-           1, 0, 0, 0, 0, 0, 0, 0,
-            0, 1, 0, 0, 0, 0, 0, 0,
-            0, 0, 1, 0, 0, 0, 0, 0,
-            0, 0, 0, 1, 0, 0, 0, 0;
+            1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 1, 0, 0, 0, 0, 0;
 
     kf_.Q_ <<
-           1, 0, 0, 0, 0, 0, 0, 0,
-            0, 1, 0, 0, 0, 0, 0, 0,
-            0, 0, 1, 0, 0, 0, 0, 0,
-            0, 0, 0, 1, 0, 0, 0, 0,
-            0, 0, 0, 0, 0.01, 0, 0, 0,
-            0, 0, 0, 0, 0, 0.01, 0, 0,
-            0, 0, 0, 0, 0, 0, 0.0001, 0,
-            0, 0, 0, 0, 0, 0, 0, 0.0001;
+            1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0.01, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0.01, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0.0001, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0.0001, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0001;
 
     kf_.R_ <<
-           1, 0, 0,  0,
-            0, 1, 0,  0,
-            0, 0, 10, 0,
-            0, 0, 0,  10;
+           1, 0, 0,  0, 0,
+            0, 1, 0,  0, 0,
+            0, 0, 10, 0, 0,
+            0, 0, 0,  10, 0,
+            0, 0, 0,  0, 1;
 }
 
 Tracker::~Tracker(){
@@ -114,7 +122,7 @@ void Tracker::Update(const BBox& bbox) {
 
 // Create and initialize new trackers for unmatched detections, with initial bounding box
 void Tracker::Init(const BBox &bbox) {
-    kf_.x_.head(4) << ConvertBboxToObservation(bbox);
+    kf_.x_.head(5) << ConvertBboxToObservation(bbox);
     publish_velocity_.tra_velocity_.pre_p_x=0;
     publish_velocity_.tra_velocity_.pre_p_y=0;
     publish_velocity_.tra_velocity_.p_x=bbox.x;
@@ -144,24 +152,33 @@ float Tracker::GetNIS() const {
 }
 
 Eigen::VectorXd Tracker::ConvertBboxToObservation(const BBox& bbox) const{
-    Eigen::VectorXd observation = Eigen::VectorXd::Zero(4);
+    Eigen::VectorXd observation = Eigen::VectorXd::Zero(5);
     auto length = static_cast<float>(bbox.dx);
     auto width = static_cast<float>(bbox.dy);
 
     float center_x = bbox.x;
     float center_y = bbox.y;
 
-    observation << center_x, center_y, length, width;
+    float yaw=bbox.yaw;
+
+    observation << center_x, center_y, length, width,yaw;
     return observation;
 }
 
 BBox Tracker::ConvertStateToBbox(const Eigen::VectorXd &state) const{
     BBox box;
-    box.x = static_cast<int>(state[0]);
-    box.y = static_cast<int>(state[1]);
+    // box.x = static_cast<int>(state[0]);
+    // box.y = static_cast<int>(state[1]);
 
-    box.dx = static_cast<int>(state[2]);
-    box.dy = static_cast<int>(state[3]);
+    // box.dx = static_cast<int>(state[2]);
+    // box.dy = static_cast<int>(state[3]);
+
+    box.x = state[0];
+    box.y = state[1];
+
+    box.dx = state[2];
+    box.dy = state[3];
+    box.yaw = state[4];
 
     return box;
 }

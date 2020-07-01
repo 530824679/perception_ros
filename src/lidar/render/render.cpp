@@ -34,13 +34,30 @@ void Render::RenderPointCloud(pcl_util::PCLVisualizerPtr &viewer, const pcl_util
 
 void Render::RenderBBox(pcl_util::PCLVisualizerPtr &viewer, BBox box, int id, Color color){
     std::string cube = "box" + std::to_string(id);
+    std::string text = "text" + std::to_string(id);
     Eigen::Vector3f bboxTransform(box.x, box.y, box.z);
     Eigen::Matrix3f matrix = Eigen::Matrix3f::Identity();
     matrix << cos(box.yaw), sin(box.yaw), 0,
                         -sin(box.yaw), cos(box.yaw), 0,
                         0, 0, 1;
     Eigen::Quaternionf bboxQuaternion(matrix);
+    std::string yaw=std::to_string(box.yaw);
     viewer->addCube(bboxTransform, bboxQuaternion, box.dx, box.dy, box.dz, cube);
+    viewer->addText(yaw,box.x,box.y,1.0,1.0,1.0,1.0,text,0);
+    viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_REPRESENTATION, pcl::visualization::PCL_VISUALIZER_REPRESENTATION_WIREFRAME, cube);
+    viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, color.GetR(), color.GetG(), color.GetB(), cube);
+    viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 1, cube);
+}
+
+void Render::RenderTrackBBox(pcl_util::PCLVisualizerPtr &viewer, InfoTracker box, int id, Color color){
+    std::string cube = "box" + std::to_string(id);
+    Eigen::Vector3f bboxTransform(box.x, box.y, box.z);
+    Eigen::Matrix3f matrix = Eigen::Matrix3f::Identity();
+    matrix << cos(box.yaw), sin(box.yaw), 0,
+                        -sin(box.yaw), cos(box.yaw), 0,
+                        0, 0, 1;
+    Eigen::Quaternionf bboxQuaternion(matrix);
+    viewer->addCube(bboxTransform, bboxQuaternion, box.width, box.length, box.height, cube);
     viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_REPRESENTATION, pcl::visualization::PCL_VISUALIZER_REPRESENTATION_WIREFRAME, cube);
     viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, color.GetR(), color.GetG(), color.GetB(), cube);
     viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 1, cube);
@@ -54,6 +71,7 @@ void Render::RenderBBox2D(pcl_util::PCLVisualizerPtr &viewer, BBox2D box2d, int 
     // top_left<<box2d.left_top_x,box2d.left_top_y,0;
     // bottom_right<<box2d.right_top_x,box2d.right_top_y,0;
     viewer->addLine(pcl::PointXYZ(box2d.left_top_x,box2d.left_top_y,0),pcl::PointXYZ(box2d.right_top_x,box2d.right_top_y,0),line);
+    //viewer->addArrow(pcl::PointXYZ(box2d.left_top_x,box2d.left_top_y,0),pcl::PointXYZ(box2d.right_top_x,box2d.right_top_y,0),line);
     //viewer->addLine(top_left,bottom_right,line);
     viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_REPRESENTATION, pcl::visualization::PCL_VISUALIZER_REPRESENTATION_WIREFRAME, line);
     viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, color.GetR(), color.GetG(), color.GetB(), line);

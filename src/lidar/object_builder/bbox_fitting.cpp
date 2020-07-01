@@ -148,6 +148,11 @@ bool BBoxEstimator::CalcBBox(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<
     box2d.left_top_y=intersection_y_1;
     box2d.right_top_x=intersection_x_2;
     box2d.right_top_y=intersection_y_2;
+    // box2d.left_top_x=(intersection_x_1+intersection_y_1)/2;
+    // box2d.left_top_y=(intersection_y_1+intersection_y_2)/2;
+
+
+
 
     // calc dimention of bounding box
     Eigen::Vector2d e_x;

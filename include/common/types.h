@@ -104,4 +104,18 @@ struct VTracker{
     int year;//the age of tracker
 };
 
+struct InfoTracker{
+    int id;
+    
+    float x;
+    float y;
+    float z;
+    
+    float width;
+    float length;
+    float height;
+
+    float yaw;
+};
+
 #endif //PERCEPTION_ROS_TYPES_H

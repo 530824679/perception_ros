@@ -38,7 +38,7 @@ public:
     Tracking();
     ~Tracking();
 
-    void Process(std::vector<BBox> bboxes, perception_ros::ObjectInfoArray &object_array);
+    void Process(std::vector<BBox> bboxes, perception_ros::ObjectInfoArray &object_array,std::vector<InfoTracker>& trackerinfo);
     bool Init(Json::Value params, std::string key);
     float CalculateIou(const BBox& det, const Tracker& track);
     void HungarianMatching(const std::vector<std::vector<float>>& iou_matrix, size_t nrows, size_t ncols, std::vector<std::vector<float>>& association);
@@ -47,7 +47,8 @@ public:
                                        std::map<int, BBox>& matched,
                                        std::vector<BBox>& unmatched_det,
                                        float iou_threshold = 0.2);
-    int track(std::map<int, Tracker> &tracks, std::vector<BBox> bboxes, int frame_index, int& current_id, perception_ros::ObjectInfoArray &object_array_msg);
+    int track(std::map<int, Tracker> &tracks, std::vector<BBox> bboxes, int frame_index, int& current_id,
+             perception_ros::ObjectInfoArray &object_array_msg,std::vector<InfoTracker>& trackerinfo);
 
 private:
     std::map<int, Tracker> tracks_;
