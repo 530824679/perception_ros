@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
     message_filters
     message_generation
     tf
+    geometry_msgs
     )
 
 find_package(OpenMP REQUIRED)
@@ -50,7 +51,7 @@ generate_messages(
 
 catkin_package(
     INCLUDE_DIRS include
-    CATKIN_DEPENDS roscpp rosbag std_msgs sensor_msgs message_filters message_runtime tf 
+    CATKIN_DEPENDS roscpp rosbag std_msgs sensor_msgs message_filters message_runtime tf geometry_msgs
 )
 
 include_directories(

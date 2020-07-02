@@ -1,9 +1,10 @@
 //
 // Created by chenwei on 20-5-28.
 //
-
 #ifndef PERCEPTION_ROS_TYPES_H
 #define PERCEPTION_ROS_TYPES_H
+
+#include "perception_ros/ObjectInfoArray.h"
 
 enum LogLevel{
     DEBUG,
@@ -118,40 +119,64 @@ struct InfoTracker{
     float yaw;
 };
 
+struct Quaternion{//四元数
+    float x;
+    float y;
+    float z;
+    float w;
+};
+
+struct Point{
+    float x;
+    float y;
+    float z;
+};
+
+struct Vector3{
+    float x;
+    float y;
+    float z;
+};
+
+struct Pose{
+    Point position;
+    Quaternion orientation;
+};
+
+struct Twist{
+    Vector3 linear;
+    Vector3 angular;
+};
 
 struct UkfTracker{
+
+    int header;
     int id;
     std::string label;
     float score;
     bool valid;
-
-    float x;
-    float y;
-    float z;
-    float yaw;
-
-    float width;
-    float length;
-    float height;
-
-    float variance_cv;
-    float variance_cvtr;
-    float variance_rm;
-
-    float velocity_x;
-    float velocity_y;
-    float velocity_z;
-
-    float angular_yaw;
-    float angular_roll;
-    float angular_pitch;
+    //3Dbbox
+    Pose pose;
+    Vector3 dimensions;
+    Vector3 variance;
+    Twist velocity;
+    Twist acceleration;
 
     bool pose_reliable;
     bool velocity_reliable;
     bool acceleration_reliable;
 
-    int indicator_state; // INDICATOR_LEFT = 0, INDICATOR_RIGHT = 1, INDICATOR_BOTH = 2, INDICATOR_NONE = 3
+    ///2Dbbox
+    std::string image_frame; // Image coordinate Frame,        Required if x,y,w,h defined
+    int x;           // X coord in image space(pixel) of the initial point of the Rect
+    int y;           // Y coord in image space(pixel) of the initial point of the Rect
+    int width;      // Width of the Rect in pixels
+    int height;     // Height of the Rect in pixels
+    float angle;       // Angle [0 to 2*PI), allow rotated rects
 
+    //Indicator information
+    int indicator_state; // INDICATOR_LEFT = 0, INDICATOR_RIGHT = 1, INDICATOR_BOTH = 2, INDICATOR_NONE = 3
+    //Behavior State of the Detected Object
     int behavior_state; // FORWARD_STATE = 0, STOPPING_STATE = 1, BRANCH_LEFT_STATE = 2, BRANCH_RIGHT_STATE = 3, YIELDING_STATE = 4, ACCELERATING_STATE = 5, SLOWDOWN_STATE = 6
 };
 
