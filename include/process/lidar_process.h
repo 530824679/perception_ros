@@ -65,6 +65,7 @@ as well as in the event of applications for industrial property rights.
 #include "segmentation/object_cluster.h"
 #include "object_builder/bbox_fitting.h"
 #include "tracker/tracking.h"
+#include "tracker/imm_ukf_pda.h"
 #include "common/pcl_types.h"
 #include "common/logging.h"
 #include "render/render.h"
@@ -96,6 +97,7 @@ private:
     std::shared_ptr<Cluster> cluster_;
     std::shared_ptr<BBoxEstimator> bbox_estimator_;
     std::shared_ptr<Tracking> tracking_;
+    std::shared_ptr<ImmUkfPda> ukf_tracking_;
 
     // Point clouds
     pcl_util::PointCloudPtr filtered_cloud_ptr_;

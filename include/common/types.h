@@ -118,4 +118,41 @@ struct InfoTracker{
     float yaw;
 };
 
+
+struct UkfTracker{
+    int id;
+    std::string label;
+    float score;
+    bool valid;
+
+    float x;
+    float y;
+    float z;
+    float yaw;
+
+    float width;
+    float length;
+    float height;
+
+    float variance_cv;
+    float variance_cvtr;
+    float variance_rm;
+
+    float velocity_x;
+    float velocity_y;
+    float velocity_z;
+
+    float angular_yaw;
+    float angular_roll;
+    float angular_pitch;
+
+    bool pose_reliable;
+    bool velocity_reliable;
+    bool acceleration_reliable;
+
+    int indicator_state; // INDICATOR_LEFT = 0, INDICATOR_RIGHT = 1, INDICATOR_BOTH = 2, INDICATOR_NONE = 3
+
+    int behavior_state; // FORWARD_STATE = 0, STOPPING_STATE = 1, BRANCH_LEFT_STATE = 2, BRANCH_RIGHT_STATE = 3, YIELDING_STATE = 4, ACCELERATING_STATE = 5, SLOWDOWN_STATE = 6
+};
+
 #endif //PERCEPTION_ROS_TYPES_H

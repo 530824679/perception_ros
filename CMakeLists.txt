@@ -15,7 +15,8 @@ find_package(catkin REQUIRED COMPONENTS
     sensor_msgs
     message_filters
     message_generation
-)
+    tf
+    )
 
 find_package(OpenMP REQUIRED)
 if(OPENMP_FOUND)
@@ -49,7 +50,7 @@ generate_messages(
 
 catkin_package(
     INCLUDE_DIRS include
-    CATKIN_DEPENDS roscpp rosbag std_msgs sensor_msgs message_filters message_runtime
+    CATKIN_DEPENDS roscpp rosbag std_msgs sensor_msgs message_filters message_runtime tf 
 )
 
 include_directories(
