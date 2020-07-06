@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
     message_generation
     tf
     geometry_msgs
+    tf2_ros
     )
 
 find_package(OpenMP REQUIRED)
@@ -42,16 +43,21 @@ add_message_files(
     FILES
     ObjectInfo.msg
     ObjectInfoArray.msg
+    DetectedObject.msg
+    DetectedObjectArray.msg
 )
 
 generate_messages(
     DEPENDENCIES
     std_msgs
+    sensor_msgs
+    tf
+    geometry_msgs
 )
 
 catkin_package(
     INCLUDE_DIRS include
-    CATKIN_DEPENDS roscpp rosbag std_msgs sensor_msgs message_filters message_runtime tf geometry_msgs
+    CATKIN_DEPENDS roscpp rosbag std_msgs sensor_msgs message_filters tf geometry_msgs message_runtime tf2_ros
 )
 
 include_directories(

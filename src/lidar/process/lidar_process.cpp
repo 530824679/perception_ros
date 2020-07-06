@@ -167,10 +167,11 @@ void LidarProcess::ProcessPointCloud(const pcl_util::PointCloudPtr &in_cloud_ptr
     std::vector<BBox> bboxes;
     std::vector<BBox2D> bbox2des;
     bbox_estimator_->Estimate(cluster_cloud_vec, bboxes,bbox2des);
+    bbox_estimator_->Estimate(cluster_cloud_vec, detetcted_object_array_);
 
     std::vector<InfoTracker> trackerinfo;
-    tracking_->Process(bboxes, object_array_,trackerinfo);
-    ukf_tracking_->run();
+    //tracking_->Process(bboxes, object_array_,trackerinfo);
+    ukf_trackig_.run(detetcted_object_array_);
 
     std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> fp_ms = end - start;

@@ -72,6 +72,8 @@ as well as in the event of applications for industrial property rights.
 
 // msg include
 #include "perception_ros/ObjectInfoArray.h"
+#include "perception_ros/DetectedObject.h"
+#include "perception_ros/DetectedObjectArray.h"
 
 extern Logging logger;
 
@@ -97,7 +99,7 @@ private:
     std::shared_ptr<Cluster> cluster_;
     std::shared_ptr<BBoxEstimator> bbox_estimator_;
     std::shared_ptr<Tracking> tracking_;
-    std::shared_ptr<ImmUkfPda> ukf_tracking_;
+    ImmUkfPda ukf_trackig_;
 
     // Point clouds
     pcl_util::PointCloudPtr filtered_cloud_ptr_;
@@ -108,6 +110,8 @@ private:
     visualization_msgs::Marker bbox_list_;
     visualization_msgs::MarkerArray velocity_list_;
     perception_ros::ObjectInfoArray object_array_;
+    perception_ros::DetectedObjectArray detetcted_object_array_;
+    perception_ros::ObjectInfoArray object_info_array_;
 
     // Subscriber
     ros::Subscriber lidar_subscriber_;
