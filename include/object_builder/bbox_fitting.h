@@ -35,7 +35,7 @@ public:
 
     //void Estimate(std::vector<pcl_util::PointCloud> &clusters, std::vector<BBox> &bboxes);
     void Estimate(std::vector<pcl_util::PointCloud> &clusters, std::vector<BBox> &bboxes,std::vector<BBox2D> &bbox2des);
-    void Estimate(std::vector<pcl_util::PointCloud> &clusters, perception_ros::DetectedObjectArray &detetcted_object_array);
+    perception_ros::DetectedObjectArray Estimate(std::vector<pcl_util::PointCloud> &clusters,std_msgs::Header header);
 private:
     bool SearchBasedFitting(pcl_util::PointCloudPtr &&in_cloud_ptr, BBox &box,BBox2D &box2d);
     bool SearchBasedFitting(pcl_util::PointCloudPtr &&in_cloud_ptr,perception_ros::DetectedObject &detected_object);

@@ -17,40 +17,73 @@
 
 #include <tracker/imm_ukf_pda.h>
 
-ImmUkfPda::ImmUkfPda()
-  : target_id_(0),  // assign unique ukf_id_ to each tracking targets
-  init_check_(false),
-  frame_count_(0)
-  //has_subscribed_vectormap_(false)
-  //private_nh_("~")
-{
-  //private_nh_.param<std::string>("tracking_frame", tracking_frame_, "world");
-  //private_nh_.param<int>("life_time_threshold", life_time_threshold_, 8);
-  //private_nh_.param<double>("gating_threshold", gating_threshold_, 9.22);
-  //private_nh_.param<double>("gate_probability", gate_probability_, 0.99);
-  //private_nh_.param<double>("detection_probability", detection_probability_, 0.9);
-  //private_nh_.param<double>("static_velocity_threshold", static_velocity_threshold_, 0.5);
-  //private_nh_.param<int>("static_num_history_threshold", static_num_history_threshold_, 3);
-  //private_nh_.param<double>("prevent_explosion_threshold", prevent_explosion_threshold_, 1000);
-  //private_nh_.param<double>("merge_distance_threshold", merge_distance_threshold_, 0.5);
-  //private_nh_.param<bool>("use_sukf", use_sukf_, false);
-
-  // for vectormap assisted tracking
-  //private_nh_.param<bool>("use_vectormap", use_vectormap_, false);
-  //private_nh_.param<double>("lane_direction_chi_threshold", lane_direction_chi_threshold_, 2.71);
-  //private_nh_.param<double>("nearest_lane_distance_threshold", nearest_lane_distance_threshold_, 1.0);
- // private_nh_.param<std::string>("vectormap_frame", vectormap_frame_, "map");
-
-  // rosparam for benchmark
-  //private_nh_.param<bool>("is_benchmark", is_benchmark_, false);
-  //private_nh_.param<std::string>("kitti_data_dir", kitti_data_dir_, "");
+ImmUkfPda::ImmUkfPda():
+target_id_(0),
+init_check_(false),
+frame_count_(0){
 }
 
 ImmUkfPda::~ImmUkfPda(){
 
 }
 
-void ImmUkfPda::run(const perception_ros::DetectedObjectArray& input)
+bool ImmUkfPda::Init(Json::Value params, std::string key){
+    if(params.isMember(key)) {
+        Json::Value tracker_param = params[key];
+        if (tracker_param.isMember("life_time_threshold_") && tracker_param["life_time_threshold_"].isInt()) {
+            life_time_threshold_ = tracker_param["life_time_threshold_"].asInt();
+        } else {
+            logger.Log(ERROR, "[%s]: Has not key named life_time_threshold_ in the tracker config.\n", __func__);
+            return false;
+        }
+        if (tracker_param.isMember("gating_threshold_") && tracker_param["gating_threshold_"].isInt()) {
+            gating_threshold_ = tracker_param["gating_threshold_"].asInt();
+        } else {
+            logger.Log(ERROR, "[%s]: Has not key named gating_threshold_ in the tracker config.\n", __func__);
+            return false;
+        }
+        if (tracker_param.isMember("gate_probability_") && tracker_param["gate_probability_"].isDouble()) {
+            gate_probability_ = tracker_param["gate_probability_"].asFloat();
+        } else {
+            logger.Log(ERROR, "[%s]: Has not key named gate_probability_ in the tracker config.\n", __func__);
+            return false;
+        }
+        if (tracker_param.isMember("detection_probability_") && tracker_param["detection_probability_"].isDouble()) {
+            detection_probability_ = tracker_param["detection_probability_"].asFloat();
+        } else {
+            logger.Log(ERROR, "[%s]: Has not key named detection_probability_ in the tracker config.\n", __func__);
+            return false;
+        }
+        if (tracker_param.isMember("static_velocity_threshold_") && tracker_param["static_velocity_threshold_"].isDouble()) {
+            static_velocity_threshold_ = tracker_param["static_velocity_threshold_"].asFloat();
+        } else {
+            logger.Log(ERROR, "[%s]: Has not key named static_velocity_threshold_ in the tracker config.\n", __func__);
+            return false;
+        }
+        if (tracker_param.isMember("static_num_history_threshold_") && tracker_param["static_num_history_threshold_"].isDouble()) {
+            static_num_history_threshold_ = tracker_param["static_num_history_threshold_"].asFloat();
+        } else {
+            logger.Log(ERROR, "[%s]: Has not key named static_num_history_threshold_ in the tracker config.\n", __func__);
+            return false;
+        }
+        if (tracker_param.isMember("prevent_explosion_threshold_") && tracker_param["prevent_explosion_threshold_"].isDouble()) {
+            prevent_explosion_threshold_ = tracker_param["prevent_explosion_threshold_"].asFloat();
+        } else {
+            logger.Log(ERROR, "[%s]: Has not key named prevent_explosion_threshold_ in the tracker config.\n", __func__);
+            return false;
+        }
+        if (tracker_param.isMember("merge_distance_threshold_") && tracker_param["merge_distance_threshold_"].isDouble()) {
+            merge_distance_threshold_ = tracker_param["merge_distance_threshold_"].asFloat();
+        } else {
+            logger.Log(ERROR, "[%s]: Has not key named merge_distance_threshold_ in the tracker config.\n", __func__);
+            return false;
+        }
+    }else{
+        logger.Log(ERROR, "[%s]: Has not key named tracker in the perception config.\n", __func__);
+    }
+}
+
+void ImmUkfPda::run(const perception_ros::DetectedObjectArray input)
 {
   //pub_object_array_ = node_handle_.advertise<perception_ros::DetectedObjectArray>("/detection/objects", 1);
   //sub_detected_array_ = node_handle_.subscribe("/detection/fusion_tools/objects", 1, &ImmUkfPda::callback, this);
@@ -63,11 +96,11 @@ void ImmUkfPda::run(const perception_ros::DetectedObjectArray& input)
   //   ROS_INFO("Could not find coordiante transformation");
   //   return;
   // }
-
   //perception_ros::DetectedObjectArray transformed_input;
   perception_ros::DetectedObjectArray detected_objects_output;
   //transformPoseToGlobal(input, transformed_input);
   tracker(input, detected_objects_output);
+
   //transformPoseToLocal(detected_objects_output);
 
   //pub_object_array_.publish(detected_objects_output);
@@ -212,7 +245,7 @@ void ImmUkfPda::measurementValidation(const perception_ros::DetectedObjectArray&
     Eigen::VectorXd diff = meas - max_det_z;
     double nis = diff.transpose() * max_det_s.inverse() * diff;
 
-    if (nis < 9.22)
+    if (nis < gating_threshold_)
     {
       if (nis < smallest_nis)
       {
@@ -263,7 +296,7 @@ bool ImmUkfPda::updateDirection(const double smallest_nis, const perception_ros:
   // {
   //   use_lane_direction = true;
   // }
-  // return use_lane_direction;
+  return use_lane_direction;
 }
 
 // bool ImmUkfPda::storeObjectWithNearestLaneDirection(const perception_ros::DetectedObject& in_object,
@@ -466,7 +499,7 @@ bool ImmUkfPda::probabilisticDataAssociation(const perception_ros::DetectedObjec
   }
 
   // prevent ukf not to explode
-  if (std::isnan(det_s) || det_s > 1000)
+  if (std::isnan(det_s) || det_s > prevent_explosion_threshold_)
   {
     target.tracking_num_ = TrackingState::Die;
     success = false;
@@ -532,19 +565,19 @@ void ImmUkfPda::staticClassification()
     // targets_[i].x_merge_(2) is referred for estimated velocity
     double current_velocity = std::abs(targets_[i].x_merge_(2));
     targets_[i].vel_history_.push_back(current_velocity);
-    if (targets_[i].tracking_num_ == TrackingState::Stable && targets_[i].lifetime_ > 8)
+    if (targets_[i].tracking_num_ == TrackingState::Stable && targets_[i].lifetime_ > life_time_threshold_)
     {
       int index = 0;
       double sum_vel = 0;
       double avg_vel = 0;
-      for (auto rit = targets_[i].vel_history_.rbegin(); index < 3; ++rit)
+      for (auto rit = targets_[i].vel_history_.rbegin(); index < static_num_history_threshold_; ++rit)
       {
         index++;
         sum_vel += *rit;
       }
-      avg_vel = double(sum_vel / 3);
+      avg_vel = double(sum_vel / static_num_history_threshold_);
 
-      if(avg_vel < 0.5 && current_velocity < 0.5)
+      if(avg_vel < static_velocity_threshold_ && current_velocity < static_velocity_threshold_)
       {
         targets_[i].is_static_ = true;
       }
@@ -571,7 +604,7 @@ bool
 ImmUkfPda::isPointInPool(const std::vector<geometry_msgs::Point>& in_pool,
                           const geometry_msgs::Point& in_point)
 {
-  for(size_t j=0; j<in_pool.size(); j++)
+  for(size_t j=0; j<in_pool.size(); j++)//check the point that is really in_pool.
   {
     if (arePointsEqual(in_pool[j], in_point))
     {
@@ -585,8 +618,10 @@ perception_ros::DetectedObjectArray
 ImmUkfPda::removeRedundantObjects(const perception_ros::DetectedObjectArray& in_detected_objects,
                             const std::vector<size_t> in_tracker_indices)
 {
-  if (in_detected_objects.objects.size() != in_tracker_indices.size())
+  if (in_detected_objects.objects.size() != in_tracker_indices.size())//for exception
     return in_detected_objects;
+  
+  //std::cout<<"in_detected_objects.objects.size()"<<in_detected_objects.objects.size()<<std::endl;
 
   perception_ros::DetectedObjectArray resulting_objects;
   resulting_objects.header = in_detected_objects.header;
@@ -597,7 +632,8 @@ ImmUkfPda::removeRedundantObjects(const perception_ros::DetectedObjectArray& in_
   {
     if(!isPointInPool(centroids, in_detected_objects.objects[i].pose.position))
     {
-      centroids.push_back(in_detected_objects.objects[i].pose.position);
+      centroids.push_back(in_detected_objects.objects[i].pose.position);//if the point is not in pool, push them into pool.
+      //std::cout<<"pose.position is:"<<in_detected_objects.objects[i].pose.position<<std::endl;
     }
   }
   //assign objects to the points
@@ -607,7 +643,7 @@ ImmUkfPda::removeRedundantObjects(const perception_ros::DetectedObjectArray& in_
     const auto& object=in_detected_objects.objects[k];
     for(size_t i=0; i< centroids.size(); i++)
     {
-      if (arePointsClose(object.pose.position, centroids[i], 0.5))
+      if (arePointsClose(object.pose.position, centroids[i],merge_distance_threshold_))
       {
         matching_objects[i].push_back(k);//store index of matched object to this point
       }
@@ -685,7 +721,9 @@ void ImmUkfPda::makeOutput(const perception_ros::DetectedObjectArray& input,
     perception_ros::DetectedObject dd;
     dd = targets_[i].object_;
     dd.id = targets_[i].ukf_id_;
+    //std::cout<<"targets id is:"<<dd.id<<std::endl;
     dd.velocity.linear.x = tv;
+    //std::cout<<"tv is:"<<tv<<std::endl;
     dd.acceleration.linear.y = tyaw_rate;
     dd.velocity_reliable = targets_[i].is_stable_;
     dd.pose_reliable = targets_[i].is_stable_;
@@ -712,12 +750,13 @@ void ImmUkfPda::makeOutput(const perception_ros::DetectedObjectArray& input,
       if (!std::isnan(q[3]))
         dd.pose.orientation.w = q[3];
     }
-    updateBehaviorState(targets_[i], false, dd);
+    updateBehaviorState(targets_[i], false, dd);//choose the mode of ukf 
 
     if (targets_[i].is_stable_ || (targets_[i].tracking_num_ >= TrackingState::Init &&
                                    targets_[i].tracking_num_ < TrackingState::Stable))
     {
       tmp_objects.objects.push_back(dd);
+      //std::cout<<"After filtering, the id is:"<<dd.id<<std::endl;
       used_targets_indices.push_back(i);
     }
   }
@@ -780,47 +819,51 @@ void ImmUkfPda::tracker(const perception_ros::DetectedObjectArray& input,
 {
   double timestamp = input.header.stamp.toSec();
   std::vector<bool> matching_vec(input.objects.size(), false);
+  //std::cout<<"input object size is:"<<input.objects.size()<<std::endl;
 
-  //std::cout<<init_check_<<std::endl;
   if (!init_check_)
   {
-    initTracker(input, 0.1);
+    initTracker(input, timestamp);
     makeOutput(input, matching_vec, detected_objects_output);
     return;
   }
 
   double dt = (timestamp - timestamp_);
   timestamp_ = timestamp;
+ 
 
-
+   //std::cout<<"targets' size is:"<<targets_.size()<<std::endl;
   // start UKF process
   for (size_t i = 0; i < targets_.size(); i++)
   {
     targets_[i].is_stable_ = false;
     targets_[i].is_static_ = false;
-
+    //std::cout<<"tracking_num_ is:"<<targets_[i].tracking_num_<<std::endl;
     if (targets_[i].tracking_num_ == TrackingState::Die)
     {
       continue;
     }
+
     // prevent ukf not to explode
-    if (targets_[i].p_merge_.determinant() > 1000 ||
-        targets_[i].p_merge_(4, 4) > 1000)
+    std::cout<<"prevent_explosion_threshold_"<<prevent_explosion_threshold_<<std::endl;
+    if (targets_[i].p_merge_.determinant() > prevent_explosion_threshold_ ||
+        targets_[i].p_merge_(4, 4) > prevent_explosion_threshold_)
     {
       targets_[i].tracking_num_ = TrackingState::Die;
       continue;
     }
-
+    std::cout<<"tracking_num_ is:"<<targets_[i].tracking_num_<<std::endl;
     targets_[i].prediction(false, false, dt);
 
     std::vector<perception_ros::DetectedObject> object_vec;
     bool success = probabilisticDataAssociation(input, dt, matching_vec, object_vec, targets_[i]);
+    std::cout<<"success"<<success<<std::endl;
     if (!success)
     {
       continue;
     }
 
-    targets_[i].update(false, 0.9, 0.99, 9.22, object_vec);
+    targets_[i].update(false,  detection_probability_, gate_probability_, gating_threshold_, object_vec);
   }
   // end UKF process
 

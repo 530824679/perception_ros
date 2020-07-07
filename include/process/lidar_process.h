@@ -22,6 +22,7 @@ as well as in the event of applications for industrial property rights.
 // ros include
 #include <ros/ros.h>
 #include <ros/publisher.h>
+#include <ros/package.h>
 
 // pcl include
 #include <pcl/point_cloud.h>
@@ -69,7 +70,6 @@ as well as in the event of applications for industrial property rights.
 #include "common/pcl_types.h"
 #include "common/logging.h"
 #include "render/render.h"
-
 // msg include
 #include "perception_ros/ObjectInfoArray.h"
 #include "perception_ros/DetectedObject.h"
@@ -99,7 +99,8 @@ private:
     std::shared_ptr<Cluster> cluster_;
     std::shared_ptr<BBoxEstimator> bbox_estimator_;
     std::shared_ptr<Tracking> tracking_;
-    ImmUkfPda ukf_trackig_;
+    std::shared_ptr<ImmUkfPda> ukf_tracking_;
+    //ImmUkfPda ukf_trackig_;
 
     // Point clouds
     pcl_util::PointCloudPtr filtered_cloud_ptr_;
@@ -130,6 +131,8 @@ private:
     pcl_util::PCLVisualizerPtr viewer_;
     CameraAngle angle_;
     Render render_;
+
+    std_msgs::Header input_header_;
 };
 
 #endif //PERCEPTION_ROS_LIDAR_PROCESS_H

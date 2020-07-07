@@ -26,8 +26,10 @@ void BBoxEstimator::Estimate(std::vector<pcl_util::PointCloud> &clusters, std::v
     }
 }
 
-void BBoxEstimator::Estimate(std::vector<pcl_util::PointCloud> &clusters, perception_ros::DetectedObjectArray &detetcted_object_array){
+perception_ros::DetectedObjectArray BBoxEstimator::Estimate(std::vector<pcl_util::PointCloud> &clusters,std_msgs::Header header){
     int i = 0;
+    perception_ros::DetectedObjectArray detetcted_object_array;
+    detetcted_object_array.header=header;
     for (int i = 0; i < clusters.size(); i++) {
         //if(i > 0) break;
         auto cluster = clusters[i];
@@ -35,12 +37,14 @@ void BBoxEstimator::Estimate(std::vector<pcl_util::PointCloud> &clusters, percep
         //BBox box{};
         //BBox2D box2d{};
         if (SearchBasedFitting(cluster.makeShared(), detected_object)){
+            detected_object.header=detetcted_object_array.header;
             detetcted_object_array.objects.push_back(detected_object);
         }else{
             logger.Log(ERROR, "Search Based Fitting false.\n");
         }
-
     }
+    //std::cout<<detetcted_object_array.objects.size()<<std::endl;
+    return detetcted_object_array;
 }
 
 bool BBoxEstimator::SearchBasedFitting(pcl_util::PointCloudPtr &&in_cloud_ptr, BBox &box,BBox2D &box2d) {

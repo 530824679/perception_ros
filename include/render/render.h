@@ -25,6 +25,8 @@ as well as in the event of applications for industrial property rights.
 // local include
 #include "common/pcl_types.h"
 #include "common/logging.h"
+#include "perception_ros/DetectedObject.h"
+#include "perception_ros/DetectedObjectArray.h"
 
 class Render{
 public:
@@ -35,6 +37,7 @@ public:
     void RenderPointCloud(pcl_util::PCLVisualizerPtr &viewer, const pcl_util::PointCloudPtr &cloud, std::string name, Color color = Color(1,1,1));
     void RenderBBox(pcl_util::PCLVisualizerPtr &viewer, BBox box, int id, Color color);
     void RenderTrackBBox(pcl_util::PCLVisualizerPtr &viewer, InfoTracker trackerinfo, int id, Color color);
+    void RenderUkfTrackBBox(pcl_util::PCLVisualizerPtr &viewer, perception_ros::DetectedObjectArray trackerinfo, int id, Color color);
     void RenderBBox2D(pcl_util::PCLVisualizerPtr &viewer, BBox2D box2d, int id, Color color);
 };
 

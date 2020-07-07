@@ -111,6 +111,13 @@ bool LidarProcess::Init(std::string &config_path) {
         }
         logger.Log(INFO, "[%s]: Init successfully, tracking object.\n", __func__);
 
+        std::string ukf_tracking_config = "immukfpda";
+        ukf_tracking_  = std::make_shared<ImmUkfPda>();
+        if (!ukf_tracking_->Init(root, ukf_tracking_config)){
+            logger.Log(WARNING, "[%s]: Init tracking object failed.\n", __func__);
+        }
+        logger.Log(INFO, "[%s]: Init successfully, tracking object.\n", __func__);
+
         return true;
     }else{
         logger.Log(ERROR, "[%s]: Parse error.\n", __func__);
@@ -129,6 +136,7 @@ void LidarProcess::ProcessLidarData(const pcl_util::PointCloudPtr &in_cloud_ptr)
     filtered_cloud_ground_ptr_->header.frame_id = in_cloud_ptr->header.frame_id;
     filtered_cloud_objects_ptr_->header.stamp = in_cloud_ptr->header.stamp;
     filtered_cloud_objects_ptr_->header.frame_id = in_cloud_ptr->header.frame_id;
+    input_header_= pcl_conversions::fromPCL(in_cloud_ptr->header);
 
     bbox_list_.header.stamp = pcl_conversions::fromPCL(in_cloud_ptr->header.stamp);
     bbox_list_.points.clear();
@@ -167,11 +175,16 @@ void LidarProcess::ProcessPointCloud(const pcl_util::PointCloudPtr &in_cloud_ptr
     std::vector<BBox> bboxes;
     std::vector<BBox2D> bbox2des;
     bbox_estimator_->Estimate(cluster_cloud_vec, bboxes,bbox2des);
-    bbox_estimator_->Estimate(cluster_cloud_vec, detetcted_object_array_);
+    detetcted_object_array_=bbox_estimator_->Estimate(cluster_cloud_vec,input_header_);
+    //std::cout<<"detected_object_array:"<<detetcted_object_array_.objects.size()<<std::endl;
 
+    clock_t s,e;
+    s=clock();
     std::vector<InfoTracker> trackerinfo;
     //tracking_->Process(bboxes, object_array_,trackerinfo);
-    ukf_trackig_.run(detetcted_object_array_);
+    ukf_tracking_->run(detetcted_object_array_);
+    e=clock();
+    std::cout<<"T="<<(1000*double(e-s)/CLOCKS_PER_SEC)<<"ms\n";
 
     std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> fp_ms = end - start;
@@ -213,6 +226,13 @@ void LidarProcess::ProcessPointCloud(const pcl_util::PointCloudPtr &in_cloud_ptr
         render_.RenderTrackBBox(viewer_, trackerinfo[i], clusterid, Color(0,1,0));
         clusterid++;
     }
+    
+    // int clusterid = 0;
+    // for (size_t i = 0; i < detetcted_object_array_.size(); i++) {
+    //     //std::cout<<trackerinfo[i].yaw<<std::endl;
+    //     render_.RenderUkfTrackBBox(viewer_, detetcted_object_array_[i], clusterid, Color(0,1,0));
+    //     clusterid++;
+    // }
     
     
     int clusterid2d = 0;

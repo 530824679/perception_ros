@@ -63,6 +63,22 @@ void Render::RenderTrackBBox(pcl_util::PCLVisualizerPtr &viewer, InfoTracker box
     viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 1, cube);
 }
 
+// void Render::RenderUkfTrackBBox(pcl_util::PCLVisualizerPtr &viewer, perception_ros::DetectedObjectArray box, int id, Color color){
+//     std::string cube = "box" + std::to_string(id);
+//     Eigen::Vector3f bboxTransform(box.pose.position.x, box.pose.position.y, box.position.z);
+//     Eigen::Matrix3f matrix = Eigen::Matrix3f::Identity();
+//     matrix << cos(box.yaw), sin(box.yaw), 0,
+//                         -sin(box.yaw), cos(box.yaw), 0,
+//                         0, 0, 1;
+//     Eigen::Quaternionf bboxQuaternion(matrix);
+//     viewer->addCube(bboxTransform, bboxQuaternion, box.dimension.width, box.dimension.length, box.dimension.height, cube);
+//     viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_REPRESENTATION, pcl::visualization::PCL_VISUALIZER_REPRESENTATION_WIREFRAME, cube);
+//     viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, color.GetR(), color.GetG(), color.GetB(), cube);
+//     viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 1, cube);
+// }
+
+
+
 void Render::RenderBBox2D(pcl_util::PCLVisualizerPtr &viewer, BBox2D box2d, int id, Color color){
     std::string line = "line" + std::to_string(id);
     

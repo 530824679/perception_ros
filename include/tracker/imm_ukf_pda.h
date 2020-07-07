@@ -22,6 +22,7 @@
 #include <chrono>
 #include <stdio.h>
 
+#include <jsoncpp/json/json.h>
 
 #include <ros/ros.h>
 #include <ros/package.h>
@@ -33,11 +34,13 @@
 
 #include <tf/transform_listener.h>
 
-
+#include "common/logging.h"
 #include "perception_ros/DetectedObject.h"
 #include "perception_ros/DetectedObjectArray.h"
 
 #include "ukf.h"
+
+extern Logging logger;
 
 class ImmUkfPda
 {
@@ -49,16 +52,16 @@ private:
   std::vector<UKF> targets_;
 
   // probabilistic data association params
-  // double gating_threshold_;
-  // double gate_probability_;
-  // double detection_probability_;
+  double gating_threshold_;
+  double gate_probability_;
+  double detection_probability_;
 
   // object association param
-  // int life_time_threshold_;
+  int life_time_threshold_;
 
   // static classification param
-  // double static_velocity_threshold_;
-  // int static_num_history_threshold_;
+  double static_velocity_threshold_;
+  int static_num_history_threshold_;
 
   // switch sukf and ImmUkfPda
   // bool use_sukf_;
@@ -72,7 +75,7 @@ private:
   //  std::string result_file_path_;
 
   // // prevent explode param for ukf
-  // double prevent_explosion_threshold_;
+  double prevent_explosion_threshold_;
 
   // // for vectormap assisted tarcking
   // bool use_vectormap_;
@@ -81,7 +84,7 @@ private:
   // double nearest_lane_distance_threshold_;
   // std::string vectormap_frame_;
 
-  // double merge_distance_threshold_;
+ double merge_distance_threshold_;
  const double CENTROID_DISTANCE = 0.2;//distance to consider centroids the same
 
   // std::string input_topic_;
@@ -179,7 +182,8 @@ private:
 public:
   ImmUkfPda();
   ~ImmUkfPda();
-  void run(const perception_ros::DetectedObjectArray& input);
+  bool Init(Json::Value params, std::string key);
+  void run(const perception_ros::DetectedObjectArray input);
 };
 
 #endif /* OBJECT_TRACKING_IMM_UKF_JPDAF_H */
