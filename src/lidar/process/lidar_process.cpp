@@ -72,7 +72,7 @@ bool LidarProcess::Init(std::string &config_path) {
         return false;
     }
 
-    Json::Value root;
+    Json::Value root; 
     Json::Reader reader;
     if (reader.parse(file, root)){
         // roi_filter
@@ -182,7 +182,7 @@ void LidarProcess::ProcessPointCloud(const pcl_util::PointCloudPtr &in_cloud_ptr
     s=clock();
     std::vector<InfoTracker> trackerinfo;
     //tracking_->Process(bboxes, object_array_,trackerinfo);
-    ukf_tracking_->run(detetcted_object_array_);
+    ukf_tracking_->run(detetcted_object_array_,trackerinfo);
     e=clock();
     std::cout<<"T="<<(1000*double(e-s)/CLOCKS_PER_SEC)<<"ms\n";
 

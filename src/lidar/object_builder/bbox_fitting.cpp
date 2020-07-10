@@ -223,7 +223,7 @@ bool BBoxEstimator::CalcBBox(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<
     Eigen::Vector2d diagonal_vec;
     diagonal_vec << intersection_x_1 - intersection_x_2, intersection_y_1 - intersection_y_2;
 
-    box.yaw =   M_PI-theta_star;
+    box.yaw =   M_PI/2-theta_star;
     //box.yaw = std::atan2(e_1_star.y(), e_1_star.x());
     box.x = (intersection_x_1 + intersection_x_2) / 2.0;
     box.y = (intersection_y_1 + intersection_y_2) / 2.0;

@@ -34,18 +34,20 @@
     "min_hits": 3,
     "min_confidence": 0.6
   },
+  "immukfpda" : {
+    "life_time_threshold": 8,
+    "gating_threshold": 9.22,
+    "gate_probability": 0.99,
+    "detection_probability": 0.9,
+    "static_velocity_threshold": 0.5,
+    "static_num_history_threshold": 3,
+    "prevent_explosion_threshold": 1000,
+    "merge_distance_threshold": 0.5,
+    "use_sukf": false
+  },
   "tracker"  : {
     "lidar_rate":10,
     "acceleration_threshold":20
-  },
-  "immukfpda":{
-    "life_time_threshold":8,
-    "gating_threshold":9.22,
-    "gate_probability_":0.99,
-    "detection_probability":0.9,
-    "static_velocity_threshold":0.5,
-    "static_num_history_threshold":3,
-    "prevent_explosion_threshold":1000,
-    "merge_distance_threshold":0.5
   }
+
 }

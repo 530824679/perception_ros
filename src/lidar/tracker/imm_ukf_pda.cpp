@@ -28,54 +28,62 @@ ImmUkfPda::~ImmUkfPda(){
 }
 
 bool ImmUkfPda::Init(Json::Value params, std::string key){
+  //std::cout<<"params"<<params<<std::endl;
     if(params.isMember(key)) {
-        Json::Value tracker_param = params[key];
-        if (tracker_param.isMember("life_time_threshold_") && tracker_param["life_time_threshold_"].isInt()) {
-            life_time_threshold_ = tracker_param["life_time_threshold_"].asInt();
+        Json::Value ukf_tracker_param = params[key];
+
+        if (ukf_tracker_param.isMember("life_time_threshold") && ukf_tracker_param["life_time_threshold"].isInt()) {
+            life_time_threshold_ = ukf_tracker_param["life_time_threshold"].asInt();
         } else {
-            logger.Log(ERROR, "[%s]: Has not key named life_time_threshold_ in the tracker config.\n", __func__);
+            logger.Log(ERROR, "[%s]: Has not key named life_time_threshold in the tracker config.\n", __func__);
             return false;
         }
-        if (tracker_param.isMember("gating_threshold_") && tracker_param["gating_threshold_"].isInt()) {
-            gating_threshold_ = tracker_param["gating_threshold_"].asInt();
+        if (ukf_tracker_param.isMember("gating_threshold") && ukf_tracker_param["gating_threshold"].isDouble()) {
+            gating_threshold_ = ukf_tracker_param["gating_threshold"].asFloat();
         } else {
-            logger.Log(ERROR, "[%s]: Has not key named gating_threshold_ in the tracker config.\n", __func__);
+            logger.Log(ERROR, "[%s]: Has not key named gating_threshold in the tracker config.\n", __func__);
             return false;
         }
-        if (tracker_param.isMember("gate_probability_") && tracker_param["gate_probability_"].isDouble()) {
-            gate_probability_ = tracker_param["gate_probability_"].asFloat();
+        if (ukf_tracker_param.isMember("gate_probability") && ukf_tracker_param["gate_probability"].isDouble()) {
+            gate_probability_ = ukf_tracker_param["gate_probability"].asFloat();
         } else {
-            logger.Log(ERROR, "[%s]: Has not key named gate_probability_ in the tracker config.\n", __func__);
+            logger.Log(ERROR, "[%s]: Has not key named gate_probability in the tracker config.\n", __func__);
             return false;
         }
-        if (tracker_param.isMember("detection_probability_") && tracker_param["detection_probability_"].isDouble()) {
-            detection_probability_ = tracker_param["detection_probability_"].asFloat();
+        if (ukf_tracker_param.isMember("detection_probability") && ukf_tracker_param["detection_probability"].isDouble()) {
+            detection_probability_ = ukf_tracker_param["detection_probability"].asFloat();
         } else {
-            logger.Log(ERROR, "[%s]: Has not key named detection_probability_ in the tracker config.\n", __func__);
+            logger.Log(ERROR, "[%s]: Has not key named detection_probability in the tracker config.\n", __func__);
             return false;
         }
-        if (tracker_param.isMember("static_velocity_threshold_") && tracker_param["static_velocity_threshold_"].isDouble()) {
-            static_velocity_threshold_ = tracker_param["static_velocity_threshold_"].asFloat();
+        if (ukf_tracker_param.isMember("static_velocity_threshold") && ukf_tracker_param["static_velocity_threshold"].isDouble()) {
+            static_velocity_threshold_ = ukf_tracker_param["static_velocity_threshold"].asFloat();
         } else {
-            logger.Log(ERROR, "[%s]: Has not key named static_velocity_threshold_ in the tracker config.\n", __func__);
+            logger.Log(ERROR, "[%s]: Has not key named static_velocity_threshold in the tracker config.\n", __func__);
             return false;
         }
-        if (tracker_param.isMember("static_num_history_threshold_") && tracker_param["static_num_history_threshold_"].isDouble()) {
-            static_num_history_threshold_ = tracker_param["static_num_history_threshold_"].asFloat();
+        if (ukf_tracker_param.isMember("static_num_history_threshold") && ukf_tracker_param["static_num_history_threshold"].isDouble()) {
+            static_num_history_threshold_ = ukf_tracker_param["static_num_history_threshold"].asFloat();
         } else {
-            logger.Log(ERROR, "[%s]: Has not key named static_num_history_threshold_ in the tracker config.\n", __func__);
+            logger.Log(ERROR, "[%s]: Has not key named static_num_history_threshold in the tracker config.\n", __func__);
             return false;
         }
-        if (tracker_param.isMember("prevent_explosion_threshold_") && tracker_param["prevent_explosion_threshold_"].isDouble()) {
-            prevent_explosion_threshold_ = tracker_param["prevent_explosion_threshold_"].asFloat();
+        if (ukf_tracker_param.isMember("prevent_explosion_threshold") && ukf_tracker_param["prevent_explosion_threshold"].isInt()) {
+            prevent_explosion_threshold_ = ukf_tracker_param["prevent_explosion_threshold"].asInt();
         } else {
-            logger.Log(ERROR, "[%s]: Has not key named prevent_explosion_threshold_ in the tracker config.\n", __func__);
+            logger.Log(ERROR, "[%s]: Has not key named prevent_explosion_threshold in the tracker config.\n", __func__);
             return false;
         }
-        if (tracker_param.isMember("merge_distance_threshold_") && tracker_param["merge_distance_threshold_"].isDouble()) {
-            merge_distance_threshold_ = tracker_param["merge_distance_threshold_"].asFloat();
+        if (ukf_tracker_param.isMember("merge_distance_threshold") && ukf_tracker_param["merge_distance_threshold"].isDouble()) {
+            merge_distance_threshold_ = ukf_tracker_param["merge_distance_threshold"].asFloat();
         } else {
-            logger.Log(ERROR, "[%s]: Has not key named merge_distance_threshold_ in the tracker config.\n", __func__);
+            logger.Log(ERROR, "[%s]: Has not key named merge_distance_threshold in the tracker config.\n", __func__);
+            return false;
+        }
+        if (ukf_tracker_param.isMember("use_sukf") && ukf_tracker_param["use_sukf"].isDouble()) {
+            use_sukf_ = ukf_tracker_param["use_sukf"].asFloat();
+        } else {
+            logger.Log(ERROR, "[%s]: Has not key named use_sukf in the tracker config.\n", __func__);
             return false;
         }
     }else{
@@ -83,132 +91,37 @@ bool ImmUkfPda::Init(Json::Value params, std::string key){
     }
 }
 
-void ImmUkfPda::run(const perception_ros::DetectedObjectArray input)
+void ImmUkfPda::run(const perception_ros::DetectedObjectArray input,std::vector<InfoTracker> &trackerinfo)
 {
-  //pub_object_array_ = node_handle_.advertise<perception_ros::DetectedObjectArray>("/detection/objects", 1);
-  //sub_detected_array_ = node_handle_.subscribe("/detection/fusion_tools/objects", 1, &ImmUkfPda::callback, this);
-  //input_header_ = input.header;
-
-
-  // bool success = updateNecessaryTransform();
-  // if (!success)
-  // {
-  //   ROS_INFO("Could not find coordiante transformation");
-  //   return;
-  // }
-  //perception_ros::DetectedObjectArray transformed_input;
   perception_ros::DetectedObjectArray detected_objects_output;
-  //transformPoseToGlobal(input, transformed_input);
   tracker(input, detected_objects_output);
-
-  //transformPoseToLocal(detected_objects_output);
-
-  //pub_object_array_.publish(detected_objects_output);
+   
+  for(int i=0;i<detected_objects_output.objects.size();i++){
+    InfoTracker tracker;
+    tracker.id=detected_objects_output.objects[i].id;
+    tracker.x=detected_objects_output.objects[i].pose.position.x;
+    tracker.y=detected_objects_output.objects[i].pose.position.y;
+    tracker.z=detected_objects_output.objects[i].pose.position.z;
+    tracker.length=detected_objects_output.objects[i].dimensions.x;
+    tracker.width=detected_objects_output.objects[i].dimensions.y;
+    tracker.height=detected_objects_output.objects[i].dimensions.z;
+    tf::Quaternion quat;
+    tf::quaternionMsgToTF(detected_objects_output.objects[i].pose.orientation,quat);
+    double roll=0,pitch=0,yaw=0;
+    tf::Matrix3x3(quat).getRPY(roll, pitch, yaw);
+    tracker.yaw=M_PI/2-yaw;
+    trackerinfo.push_back(tracker);
+  }
 
 }
 
-// void ImmUkfPda::callback(const perception_ros::DetectedObjectArray& input)
-// {
-//   input_header_ = input.header;
-
-
-//   bool success = updateNecessaryTransform();
-//   if (!success)
-//   {
-//     ROS_INFO("Could not find coordiante transformation");
-//     return;
-//   }
-
-//   //perception_ros::DetectedObjectArray transformed_input;
-//   perception_ros::DetectedObjectArray detected_objects_output;
-//   //transformPoseToGlobal(input, transformed_input);
-//   tracker(input, detected_objects_output);
-//   //transformPoseToLocal(detected_objects_output);
-
-//   pub_object_array_.publish(detected_objects_output);
-
-//   if (is_benchmark_)
-//   {
-//     dumpResultText(detected_objects_output);
-//   }
-// }
-
-// void ImmUkfPda::checkVectormapSubscription()
-// {
-//   if (use_vectormap_ && !has_subscribed_vectormap_)
-//   {
-//     //lanes_ = vmap_.findByFilter([](const vector_map_msgs::Lane& lane) { return true; });
-//     if (lanes_.empty())
-//     {
-//       ROS_INFO("Has not subscribed vectormap");
-//     }
-//     else
-//     {
-//       has_subscribed_vectormap_ = true;
-//     }
-//   }
-// }
 
 bool ImmUkfPda::updateNecessaryTransform()
 {
   bool success = true;
-  // try
-  // {
-  //   tf_listener_.waitForTransform(input_header_.frame_id, tracking_frame_, ros::Time(0), ros::Duration(1.0));
-  //   tf_listener_.lookupTransform(tracking_frame_, input_header_.frame_id, ros::Time(0), local2global_);
-  // }
-  // catch (tf::TransformException ex)
-  // {
-  //   ROS_ERROR("%s", ex.what());
-  //   success = false;
-  // }
-  // if (use_vectormap_ && has_subscribed_vectormap_)
-  // {
-  //   try
-  //   {
-  //     tf_listener_.waitForTransform(vectormap_frame_, tracking_frame_, ros::Time(0), ros::Duration(1.0));
-  //     tf_listener_.lookupTransform(vectormap_frame_, tracking_frame_, ros::Time(0), tracking_frame2lane_frame_);
-  //     tf_listener_.lookupTransform(tracking_frame_, vectormap_frame_, ros::Time(0), lane_frame2tracking_frame_);
-  //   }
-  //   catch (tf::TransformException ex)
-  //   {
-  //     ROS_ERROR("%s", ex.what());
-  //   }
-  // }
   return success;
 }
 
-void ImmUkfPda::transformPoseToGlobal(const perception_ros::DetectedObjectArray& input,
-                                      perception_ros::DetectedObjectArray& transformed_input)
-{
-  transformed_input.header = input_header_;
-  for (auto const &object: input.objects)
-  {
-    //geometry_msgs::Pose out_pose = getTransformedPose(object.pose, local2global_);
-    geometry_msgs::Pose out_pose=object.pose;
-    perception_ros::DetectedObject dd;
-    dd.header = input.header;
-    dd = object;
-    dd.pose = out_pose;
-
-    transformed_input.objects.push_back(dd);
-  }
-}
-
-// void ImmUkfPda::transformPoseToLocal(perception_ros::DetectedObjectArray& detected_objects_output)
-// {
-//   detected_objects_output.header = input_header_;
-
-//   tf::Transform inv_local2global = local2global_.inverse();
-//   tf::StampedTransform global2local;
-//   global2local.setData(inv_local2global);
-//   for (auto& object : detected_objects_output.objects)
-//   {
-//     geometry_msgs::Pose out_pose = getTransformedPose(object.pose, global2local);
-//     object.header = input_header_;
-//     object.pose = out_pose;
-//   }
-// }
 
 geometry_msgs::Pose ImmUkfPda::getTransformedPose(const geometry_msgs::Pose& in_pose,
                                                   const tf::StampedTransform& tf_stamp)
@@ -286,69 +199,10 @@ bool ImmUkfPda::updateDirection(const double smallest_nis, const perception_ros:
   bool use_lane_direction = false;
   target.is_direction_cv_available_ = false;
   target.is_direction_ctrv_available_ = false;
-  // bool get_lane_success = storeObjectWithNearestLaneDirection(in_object, out_object);
-  // if (!get_lane_success)
-  // {
-  //   return use_lane_direction;
-  // }
-  // target.checkLaneDirectionAvailability(out_object, lane_direction_chi_threshold_, use_sukf_);
-  // if (target.is_direction_cv_available_ || target.is_direction_ctrv_available_)
-  // {
-  //   use_lane_direction = true;
-  // }
+
   return use_lane_direction;
 }
 
-// bool ImmUkfPda::storeObjectWithNearestLaneDirection(const perception_ros::DetectedObject& in_object,
-//                                                  perception_ros::DetectedObject& out_object)
-// {
-//   geometry_msgs::Pose lane_frame_pose = getTransformedPose(in_object.pose, tracking_frame2lane_frame_);
-//   double min_dist = std::numeric_limits<double>::max();
-
-//   double min_yaw = 0;
-//   for (auto const& lane : lanes_)
-//   {
-//     vector_map_msgs::Node node = vmap_.findByKey(vector_map::Key<vector_map_msgs::Node>(lane.bnid));
-//     vector_map_msgs::Point point = vmap_.findByKey(vector_map::Key<vector_map_msgs::Point>(node.pid));
-//     double distance = std::sqrt(std::pow(point.bx - lane_frame_pose.position.y, 2) +
-//                                 std::pow(point.ly - lane_frame_pose.position.x, 2));
-//     if (distance < min_dist)
-//     {
-//       min_dist = distance;
-//       vector_map_msgs::Node front_node = vmap_.findByKey(vector_map::Key<vector_map_msgs::Node>(lane.fnid));
-//       vector_map_msgs::Point front_point = vmap_.findByKey(vector_map::Key<vector_map_msgs::Point>(front_node.pid));
-//       min_yaw = std::atan2((front_point.bx - point.bx), (front_point.ly - point.ly));
-//     }
-//   }
-
-//   bool success = false;
-//   if (min_dist < nearest_lane_distance_threshold_)
-//   {
-//     success = true;
-//   }
-//   else
-//   {
-//     return success;
-//   }
-
-//   // map yaw in rotation matrix representation
-//   tf::Quaternion map_quat = tf::createQuaternionFromYaw(min_yaw);
-//   tf::Matrix3x3 map_matrix(map_quat);
-
-
-//   // vectormap_frame to tracking_frame rotation matrix
-//   tf::Quaternion rotation_quat = lane_frame2tracking_frame_.getRotation();
-//   tf::Matrix3x3 rotation_matrix(rotation_quat);
-
-//   // rotated yaw in matrix representation
-//   tf::Matrix3x3 rotated_matrix = rotation_matrix * map_matrix;
-//   double roll, pitch, yaw;
-//   rotated_matrix.getRPY(roll, pitch, yaw);
-
-//   out_object = in_object;
-//   out_object.angle = yaw;
-//   return success;
-// }
 
 void ImmUkfPda::updateTargetWithAssociatedObject(const std::vector<perception_ros::DetectedObject>& object_vec,
                                                  UKF& target)
@@ -485,7 +339,7 @@ bool ImmUkfPda::probabilisticDataAssociation(const perception_ros::DetectedObjec
   Eigen::MatrixXd max_det_s;
   bool success = true;
   
-  if (false)
+  if (use_sukf_)
   {
     max_det_z = target.z_pred_ctrv_;
     max_det_s = target.s_ctrv_;
@@ -750,7 +604,7 @@ void ImmUkfPda::makeOutput(const perception_ros::DetectedObjectArray& input,
       if (!std::isnan(q[3]))
         dd.pose.orientation.w = q[3];
     }
-    updateBehaviorState(targets_[i], false, dd);//choose the mode of ukf 
+    updateBehaviorState(targets_[i], true, dd);//choose the mode of ukf 
 
     if (targets_[i].is_stable_ || (targets_[i].tracking_num_ >= TrackingState::Init &&
                                    targets_[i].tracking_num_ < TrackingState::Stable))
@@ -777,42 +631,6 @@ void ImmUkfPda::removeUnnecessaryTarget()
   targets_ = temp_targets;
 }
 
-// void ImmUkfPda::dumpResultText(perception_ros::DetectedObjectArray& detected_objects)
-// {
-//   std::ofstream outputfile(result_file_path_, std::ofstream::out | std::ofstream::app);
-//   for (size_t i = 0; i < detected_objects.objects.size(); i++)
-//   {
-//     double yaw = tf::getYaw(detected_objects.objects[i].pose.orientation);
-
-//     // KITTI tracking benchmark data format:
-//     // (frame_number,tracked_id, object type, truncation, occlusion, observation angle, x1,y1,x2,y2, h, w, l, cx, cy,
-//     // cz, yaw)
-//     // x1, y1, x2, y2 are for 2D bounding box.
-//     // h, w, l, are for height, width, length respectively
-//     // cx, cy, cz are for object centroid
-
-//     // Tracking benchmark is based on frame_number, tracked_id,
-//     // bounding box dimentions and object pose(centroid and orientation) from bird-eye view
-//     outputfile << std::to_string(frame_count_) << " " << std::to_string(detected_objects.objects[i].id) << " "
-//                << "Unknown"
-//                << " "
-//                << "-1"
-//                << " "
-//                << "-1"
-//                << " "
-//                << "-1"
-//                << " "
-//                << "-1 -1 -1 -1"
-//                << " " << std::to_string(detected_objects.objects[i].dimensions.x) << " "
-//                << std::to_string(detected_objects.objects[i].dimensions.y) << " "
-//                << "-1"
-//                << " " << std::to_string(detected_objects.objects[i].pose.position.x) << " "
-//                << std::to_string(detected_objects.objects[i].pose.position.y) << " "
-//                << "-1"
-//                << " " << std::to_string(yaw) << "\n";
-//   }
-//   frame_count_++;
-// }
 
 void ImmUkfPda::tracker(const perception_ros::DetectedObjectArray& input,
                         perception_ros::DetectedObjectArray& detected_objects_output)
@@ -823,6 +641,7 @@ void ImmUkfPda::tracker(const perception_ros::DetectedObjectArray& input,
 
   if (!init_check_)
   {
+    //std::cout<<"init_check_:"<<init_check_<<std::endl;
     initTracker(input, timestamp);
     makeOutput(input, matching_vec, detected_objects_output);
     return;
@@ -845,25 +664,25 @@ void ImmUkfPda::tracker(const perception_ros::DetectedObjectArray& input,
     }
 
     // prevent ukf not to explode
-    std::cout<<"prevent_explosion_threshold_"<<prevent_explosion_threshold_<<std::endl;
+    //std::cout<<"prevent_explosion_threshold_"<<prevent_explosion_threshold_<<std::endl;
     if (targets_[i].p_merge_.determinant() > prevent_explosion_threshold_ ||
         targets_[i].p_merge_(4, 4) > prevent_explosion_threshold_)
     {
       targets_[i].tracking_num_ = TrackingState::Die;
       continue;
     }
-    std::cout<<"tracking_num_ is:"<<targets_[i].tracking_num_<<std::endl;
-    targets_[i].prediction(false, false, dt);
+    //std::cout<<"tracking_num_ is:"<<targets_[i].tracking_num_<<std::endl;
+    targets_[i].prediction(use_sukf_, false, dt);
 
     std::vector<perception_ros::DetectedObject> object_vec;
     bool success = probabilisticDataAssociation(input, dt, matching_vec, object_vec, targets_[i]);
-    std::cout<<"success"<<success<<std::endl;
+    //std::cout<<"success"<<success<<std::endl;
     if (!success)
     {
       continue;
     }
 
-    targets_[i].update(false,  detection_probability_, gate_probability_, gating_threshold_, object_vec);
+    targets_[i].update(use_sukf_,  detection_probability_, gate_probability_, gating_threshold_, object_vec);
   }
   // end UKF process
 
@@ -875,6 +694,7 @@ void ImmUkfPda::tracker(const perception_ros::DetectedObjectArray& input,
 
   // making output for visualization
   makeOutput(input, matching_vec, detected_objects_output);
+  //std::cout<<"detected_objects_output:"<<detected_objects_output<<std::endl;
 
   // remove unnecessary ukf object
   removeUnnecessaryTarget();

@@ -10,7 +10,7 @@ Tracking::~Tracking() {
 }
 
 void Tracking::Process(std::vector<BBox> bboxes, perception_ros::ObjectInfoArray &object_array,std::vector<InfoTracker>& trackerinfo){
-
+    
     track(tracks_, bboxes, frame_index_, current_id_, object_array,trackerinfo);
     frame_index_++;
 }

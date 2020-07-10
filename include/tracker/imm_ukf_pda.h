@@ -64,7 +64,7 @@ private:
   int static_num_history_threshold_;
 
   // switch sukf and ImmUkfPda
-  // bool use_sukf_;
+  bool use_sukf_;
 
   // whether if benchmarking tracking result
   // bool is_benchmark_;
@@ -106,9 +106,9 @@ private:
 
   // void callback(const perception_ros::DetectedObjectArray& input);
 
-  void transformPoseToGlobal(const perception_ros::DetectedObjectArray& input,
-                             perception_ros::DetectedObjectArray& transformed_input);
-  void transformPoseToLocal(perception_ros::DetectedObjectArray& detected_objects_output);
+  //void transformPoseToGlobal(const perception_ros::DetectedObjectArray& input,
+                             //perception_ros::DetectedObjectArray& transformed_input);
+  //void transformPoseToLocal(perception_ros::DetectedObjectArray& detected_objects_output);
 
   geometry_msgs::Pose getTransformedPose(const geometry_msgs::Pose& in_pose,
                                                 const tf::StampedTransform& tf_stamp);
@@ -183,7 +183,7 @@ public:
   ImmUkfPda();
   ~ImmUkfPda();
   bool Init(Json::Value params, std::string key);
-  void run(const perception_ros::DetectedObjectArray input);
+  void run(const perception_ros::DetectedObjectArray input,std::vector<InfoTracker> &trackerinfo);
 };
 
 #endif /* OBJECT_TRACKING_IMM_UKF_JPDAF_H */
