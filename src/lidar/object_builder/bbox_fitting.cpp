@@ -307,6 +307,18 @@ bool BBoxEstimator::CalcBBox(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<
     detected_object.dimensions.x=std::fabs(e_x.dot(diagonal_vec));
     detected_object.dimensions.y=std::fabs(e_y.dot(diagonal_vec));
     detected_object.dimensions.z=std::max(dz, ep);
+    
+    if (detected_object.dimensions.x < ep && detected_object.dimensions.y < ep)
+        return false;
+    //detected_object.dimensions.x = std::max(detected_object.dimensions.x, ep);
+    //detected_object.dimensions.y = std::max(detected_object.dimensions.y, ep);
+    
+    float width_length_ratio=detected_object.dimensions.x/detected_object.dimensions.y;
+    float length_width_ratio=detected_object.dimensions.y/detected_object.dimensions.x;
+    if(width_length_ratio>10||length_width_ratio>10){
+        return false;
+    }
+
 
     tf::Quaternion quat=tf::createQuaternionFromRPY(0.0, 0.0,M_PI-theta_star);
     tf::quaternionTFToMsg(quat, detected_object.pose.orientation);
