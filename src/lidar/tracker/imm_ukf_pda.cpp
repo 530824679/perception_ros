@@ -91,9 +91,9 @@ bool ImmUkfPda::Init(Json::Value params, std::string key){
     }
 }
 
-void ImmUkfPda::run(const perception_ros::DetectedObjectArray input,std::vector<InfoTracker> &trackerinfo)
+void ImmUkfPda::run(const perception_ros::DetectedObjectArray input,std::vector<InfoTracker> &trackerinfo,perception_ros::DetectedObjectArray &detected_objects_output)
 {
-  perception_ros::DetectedObjectArray detected_objects_output;
+  
   tracker(input, detected_objects_output);
    
   for(int i=0;i<detected_objects_output.objects.size();i++){

@@ -100,9 +100,7 @@ private:
   // ros::NodeHandle node_handle_;
   // ros::NodeHandle private_nh_;
   // ros::Subscriber sub_detected_array_;
-  // ros::Publisher pub_object_array_;
-
-  std_msgs::Header input_header_;
+  //std_msgs::Header input_header_;
 
   // void callback(const perception_ros::DetectedObjectArray& input);
 
@@ -183,7 +181,7 @@ public:
   ImmUkfPda();
   ~ImmUkfPda();
   bool Init(Json::Value params, std::string key);
-  void run(const perception_ros::DetectedObjectArray input,std::vector<InfoTracker> &trackerinfo);
+  void run(const perception_ros::DetectedObjectArray input,std::vector<InfoTracker> &trackerinfo,perception_ros::DetectedObjectArray &detected_objects_output);
 };
 
 #endif /* OBJECT_TRACKING_IMM_UKF_JPDAF_H */

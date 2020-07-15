@@ -41,6 +41,12 @@ target_link_libraries(object_builder_lib
         common_lib
         ${PCL_LIBRARIES})
 
+add_library(objects_visualizer_lib STATIC
+        ${PROJECT_SOURCE_DIR}/src/lidar/objects_visualizer/visualize_tracked_objects.cpp)
+target_link_libraries(objects_visualizer_lib
+        common_lib)
+
+
 ########## recognition_lib ##########
 
 
@@ -75,5 +81,6 @@ target_link_libraries(lidar_perception_lib
         curb_detect_lib
         segmentation_lib
         object_builder_lib
+        objects_visualizer_lib
         tracker_lib
         render_lib)

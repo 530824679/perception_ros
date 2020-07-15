@@ -29,12 +29,14 @@ LidarProcess::LidarProcess(ros::NodeHandle node, std::string config_path){
     lidar_subscriber_ = node.subscribe("/livox/lidar_1HDDGAU00100091", 100, &LidarProcess::ProcessLidarData, this, ros::TransportHints().reliable().tcpNoDelay(true));
 
     // Initialize Publishers
-    filtered_cloud_publisher_ = node.advertise<pcl_util::PointCloud>("lidar_filtered", 1);
-    filtered_cloud_objects_publisher_ = node.advertise<pcl_util::PointCloud>("lidar_filtered_objects", 1);
-    filtered_cloud_ground_publisher_ = node.advertise<pcl_util::PointCloud>("lidar_filtered_ground", 1);
-    bbox_publisher_ = node.advertise<visualization_msgs::Marker>("lidar_bbox_marker", 1);
-    velocity_publisher_ = node.advertise<visualization_msgs::MarkerArray>("lidar_velocity_marker", 1);
+    //filtered_cloud_publisher_ = node.advertise<pcl_util::PointCloud>("lidar_filtered", 1);
+    //filtered_cloud_objects_publisher_ = node.advertise<pcl_util::PointCloud>("lidar_filtered_objects", 1);
+    //filtered_cloud_ground_publisher_ = node.advertise<pcl_util::PointCloud>("lidar_filtered_ground", 1);
+    //bbox_publisher_ = node.advertise<visualization_msgs::Marker>("lidar_bbox_marker", 1);
+    //velocity_publisher_ = node.advertise<visualization_msgs::MarkerArray>("lidar_velocity_marker", 1);
     object_publisher_ = node.advertise<perception_ros::ObjectInfoArray>("lidar_object_marker", 1);
+    pub_object_array_=node.advertise<perception_ros::DetectedObjectArray>("/detection/objects",1);
+    bounding_box_tracked_=node.advertise<visualization_msgs::MarkerArray>("/bouding_boxes_tracked",1);
 
     viewer_ = CloudViewer();
 }
@@ -118,6 +120,13 @@ bool LidarProcess::Init(std::string &config_path) {
         }
         logger.Log(INFO, "[%s]: Init successfully, tracking object.\n", __func__);
 
+        std::string visualization_config = "visualization";
+        visualization_  = std::make_shared<VisualizeDetectedObjects>();
+        if (!visualization_->Init(root, visualization_config)){
+            logger.Log(WARNING, "[%s]: Init visualization object failed.\n", __func__);
+        }
+        logger.Log(INFO, "[%s]: Init successfully, visualization object.\n", __func__);
+
         return true;
     }else{
         logger.Log(ERROR, "[%s]: Parse error.\n", __func__);
@@ -145,9 +154,6 @@ void LidarProcess::ProcessLidarData(const pcl_util::PointCloudPtr &in_cloud_ptr)
 
 
     ProcessPointCloud(in_cloud_ptr);
-
-
-
 
 //    filtered_cloud_publisher_.publish(filtered_cloud_ptr_);
 //    filtered_cloud_objects_publisher_.publish(filtered_cloud_objects_ptr_);
@@ -177,34 +183,33 @@ void LidarProcess::ProcessPointCloud(const pcl_util::PointCloudPtr &in_cloud_ptr
     bbox_estimator_->Estimate(cluster_cloud_vec, bboxes,bbox2des);
     detetcted_object_array_=bbox_estimator_->Estimate(cluster_cloud_vec,input_header_);
     //std::cout<<"detected_object_array:"<<detetcted_object_array_.objects.size()<<std::endl;
-
+    
+    std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> fp_ms = end - start;
+    std::cout << "cluster Done! Took " << fp_ms.count() << "ms\n";
+    
     clock_t s,e;
     s=clock();
     std::vector<InfoTracker> trackerinfo;
-    //tracking_->Process(bboxes, object_array_,trackerinfo);
-    ukf_tracking_->run(detetcted_object_array_,trackerinfo);
+    //tracking_->Process(bboxes, object_array_,trackerinfo); //KF
+    perception_ros::DetectedObjectArray detected_objects_output; //UFK
+    ukf_tracking_->run(detetcted_object_array_,trackerinfo,detected_objects_output);
     e=clock();
     std::cout<<"T="<<(1000*double(e-s)/CLOCKS_PER_SEC)<<"ms\n";
 
-    std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> fp_ms = end - start;
-    //std::cout << "Done! Took " << fp_ms.count() << "ms\n";
 
-
-
-
-
-
-
-
-
+    //rviz visualization
+    visualization_msgs::MarkerArray object_boxes;
+    visualization_->run(detected_objects_output,object_boxes);
+    //std::cout<<"object_boxes:"<<object_boxes<<std::endl;
+    bounding_box_tracked_.publish(object_boxes);
 
 
     // TMP Visualization
     viewer_->removeAllPointClouds();
     viewer_->removeAllShapes();
 
-    //render_.RenderPointCloud(viewer_, calibrate_cloud_all_ptr, "PointCloud_raw", Color(1,0,0));
+    render_.RenderPointCloud(viewer_, calibrate_cloud_all_ptr, "PointCloud_raw", Color(1,0,0));
 
 
     for (int i = 0; i < cluster_cloud_vec.size(); ++i) {
@@ -235,13 +240,13 @@ void LidarProcess::ProcessPointCloud(const pcl_util::PointCloudPtr &in_cloud_ptr
     // }
     
     
-    int clusterid2d = 0;
-    for (size_t i = 0; i < bbox2des.size(); i++) {
-        render_.RenderBBox2D(viewer_, bbox2des[i], clusterid2d, Color(0,0,1));
-        clusterid2d++;
-    }
+    // int clusterid2d = 0;
+    // for (size_t i = 0; i < bbox2des.size(); i++) {
+    //     render_.RenderBBox2D(viewer_, bbox2des[i], clusterid2d, Color(0,0,1));
+    //     clusterid2d++;
+    // }
 
-    viewer_->spinOnce(100);
+     viewer_->spinOnce(100);
     // while (!viewer_->wasStopped()) {
     //     viewer_->spinOnce(100);
     //     boost::this_thread::sleep(boost::posix_time::microseconds(1000));

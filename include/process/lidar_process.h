@@ -70,6 +70,7 @@ as well as in the event of applications for industrial property rights.
 #include "common/pcl_types.h"
 #include "common/logging.h"
 #include "render/render.h"
+#include "objects_visualizer/visualize_tracked_objects.h"
 // msg include
 #include "perception_ros/ObjectInfoArray.h"
 #include "perception_ros/DetectedObject.h"
@@ -98,8 +99,9 @@ private:
     std::shared_ptr<Calibrate> calibrate_;
     std::shared_ptr<Cluster> cluster_;
     std::shared_ptr<BBoxEstimator> bbox_estimator_;
-    std::shared_ptr<Tracking> tracking_;
-    std::shared_ptr<ImmUkfPda> ukf_tracking_;
+    std::shared_ptr<Tracking> tracking_; //kf_tracking_
+    std::shared_ptr<ImmUkfPda> ukf_tracking_;//ukf_tracking_
+    std::shared_ptr<VisualizeDetectedObjects> visualization_;
     //ImmUkfPda ukf_trackig_;
 
     // Point clouds
@@ -121,16 +123,22 @@ private:
     ros::Publisher filtered_cloud_publisher_;
     ros::Publisher filtered_cloud_ground_publisher_;
     ros::Publisher filtered_cloud_objects_publisher_;
+    ros::Publisher pub_object_array_;
 
     // Marker publisher
     ros::Publisher bbox_publisher_;
     ros::Publisher velocity_publisher_;
     ros::Publisher object_publisher_;
 
+    //BoundingBoxArray publisher
+    ros::Publisher bounding_box_tracked_;
+
+
     // Visualize
     pcl_util::PCLVisualizerPtr viewer_;
     CameraAngle angle_;
     Render render_;
+    VisualizeDetectedObjects visualize_objects_;
 
     std_msgs::Header input_header_;
 };

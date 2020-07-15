@@ -48,6 +48,11 @@
   "tracker"  : {
     "lidar_rate":10,
     "acceleration_threshold":20
+  },
+  "visualization" :{
+    "object_speed_threshold":0.1,
+    "arrow_speed_threshold":0.25,
+    "marker_display_duration":0.2
   }
 
 }
