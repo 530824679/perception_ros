@@ -34,15 +34,28 @@ void Render::RenderPointCloud(pcl_util::PCLVisualizerPtr &viewer, const pcl_util
 
 void Render::RenderBBox(pcl_util::PCLVisualizerPtr &viewer, BBox box, int id, Color color){
     std::string cube = "box" + std::to_string(id);
+    std::string line = "line" + std::to_string(id);
     std::string text = "text" + std::to_string(id);
     Eigen::Vector3f bboxTransform(box.x, box.y, box.z);
     Eigen::Matrix3f matrix = Eigen::Matrix3f::Identity();
-    matrix << cos(box.yaw), sin(box.yaw), 0,
-                        -sin(box.yaw), cos(box.yaw), 0,
+    matrix << -cos(box.yaw), sin(box.yaw), 0,
+                        -sin(box.yaw), -cos(box.yaw), 0,
                         0, 0, 1;
     Eigen::Quaternionf bboxQuaternion(matrix);
     std::string yaw=std::to_string(box.yaw);
+
+    pcl::PointXYZ startPoint;
+    startPoint.x=box.x;
+    startPoint.y=box.y;
+    startPoint.z=box.z;
+
+    pcl::PointXYZ endPoint;
+    endPoint.x=box.x+3*cos(box.yaw);
+    endPoint.y=box.y+3*sin(box.yaw);
+    endPoint.z=box.z;
+
     viewer->addCube(bboxTransform, bboxQuaternion, box.dx, box.dy, box.dz, cube);
+    viewer->addLine(startPoint,endPoint,200,10,20,line);
     viewer->addText(yaw,box.x,box.y,1.0,1.0,1.0,1.0,text,0);
     viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_REPRESENTATION, pcl::visualization::PCL_VISUALIZER_REPRESENTATION_WIREFRAME, cube);
     viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, color.GetR(), color.GetG(), color.GetB(), cube);
@@ -51,13 +64,29 @@ void Render::RenderBBox(pcl_util::PCLVisualizerPtr &viewer, BBox box, int id, Co
 
 void Render::RenderTrackBBox(pcl_util::PCLVisualizerPtr &viewer, InfoTracker box, int id, Color color){
     std::string cube = "box" + std::to_string(id);
+    std::string line = "line" + std::to_string(id);
+    std::string text = "text" + std::to_string(id);
     Eigen::Vector3f bboxTransform(box.x, box.y, box.z);
     Eigen::Matrix3f matrix = Eigen::Matrix3f::Identity();
-    matrix << cos(box.yaw), sin(box.yaw), 0,
-                        -sin(box.yaw), cos(box.yaw), 0,
+    matrix << -cos(box.yaw), sin(box.yaw), 0,
+                        -sin(box.yaw), -cos(box.yaw), 0,
                         0, 0, 1;
     Eigen::Quaternionf bboxQuaternion(matrix);
+
+    pcl::PointXYZ startPoint;
+    startPoint.x=box.x;
+    startPoint.y=box.y;
+    startPoint.z=box.z;
+
+    pcl::PointXYZ endPoint;
+    endPoint.x=box.x+3*cos(box.yaw);
+    endPoint.y=box.y+3*sin(box.yaw);
+    endPoint.z=box.z;
+    
+    std::string text_show="id:"+std::to_string(box.id);
     viewer->addCube(bboxTransform, bboxQuaternion, box.width, box.length, box.height, cube);
+    viewer->addLine(startPoint,endPoint,134,121,140,line);
+    viewer->addText3D(text_show,startPoint,0.8,123,22,44,text);
     viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_REPRESENTATION, pcl::visualization::PCL_VISUALIZER_REPRESENTATION_WIREFRAME, cube);
     viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, color.GetR(), color.GetG(), color.GetB(), cube);
     viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 1, cube);

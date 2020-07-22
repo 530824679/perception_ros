@@ -37,6 +37,7 @@ LidarProcess::LidarProcess(ros::NodeHandle node, std::string config_path){
     object_publisher_ = node.advertise<perception_ros::ObjectInfoArray>("lidar_object_marker", 1);
     pub_object_array_=node.advertise<perception_ros::DetectedObjectArray>("/detection/objects",1);
     bounding_box_tracked_=node.advertise<visualization_msgs::MarkerArray>("/bouding_boxes_tracked",1);
+    bounding_box_detected_=node.advertise<visualization_msgs::MarkerArray>("/bounding_boxes_detected",1);
 
     viewer_ = CloudViewer();
 }
@@ -197,19 +198,17 @@ void LidarProcess::ProcessPointCloud(const pcl_util::PointCloudPtr &in_cloud_ptr
     e=clock();
     std::cout<<"T="<<(1000*double(e-s)/CLOCKS_PER_SEC)<<"ms\n";
 
+    
+    //visualization_->run(detetcted_object_array_,bounding_box_detected_);
 
     //rviz visualization
-    visualization_msgs::MarkerArray object_boxes;
-    visualization_->run(detected_objects_output,object_boxes);
-    //std::cout<<"object_boxes:"<<object_boxes<<std::endl;
-    bounding_box_tracked_.publish(object_boxes);
-
+    //visualization_->run(detected_objects_output,bounding_box_tracked_);
 
     // TMP Visualization
     viewer_->removeAllPointClouds();
     viewer_->removeAllShapes();
 
-    render_.RenderPointCloud(viewer_, calibrate_cloud_all_ptr, "PointCloud_raw", Color(1,0,0));
+    // render_.RenderPointCloud(viewer_, calibrate_cloud_all_ptr, "PointCloud_raw", Color(1,0,0));
 
 
     for (int i = 0; i < cluster_cloud_vec.size(); ++i) {
@@ -218,13 +217,15 @@ void LidarProcess::ProcessPointCloud(const pcl_util::PointCloudPtr &in_cloud_ptr
         float random_b = rand() % 10 / (float)10.0;
         render_.RenderPointCloud(viewer_, cluster_cloud_vec[i].makeShared(), "PointCloud"+std::to_string(i), Color(random_r,random_g,random_b));
     }
-
+    
+    //show detected bbox
     // int clusterid = 0;
     // for (size_t i = 0; i < bboxes.size(); i++) {
     //     render_.RenderBBox(viewer_, bboxes[i], clusterid, Color(0,1,0));
     //     clusterid++;
     // }
-
+    
+    //show tracked results
     int clusterid = 0;
     for (size_t i = 0; i < trackerinfo.size(); i++) {
         //std::cout<<trackerinfo[i].yaw<<std::endl;
@@ -232,21 +233,14 @@ void LidarProcess::ProcessPointCloud(const pcl_util::PointCloudPtr &in_cloud_ptr
         clusterid++;
     }
     
-    // int clusterid = 0;
-    // for (size_t i = 0; i < detetcted_object_array_.size(); i++) {
-    //     //std::cout<<trackerinfo[i].yaw<<std::endl;
-    //     render_.RenderUkfTrackBBox(viewer_, detetcted_object_array_[i], clusterid, Color(0,1,0));
-    //     clusterid++;
-    // }
-    
-    
+    //show the crossline of box
     // int clusterid2d = 0;
     // for (size_t i = 0; i < bbox2des.size(); i++) {
     //     render_.RenderBBox2D(viewer_, bbox2des[i], clusterid2d, Color(0,0,1));
     //     clusterid2d++;
     // }
 
-     viewer_->spinOnce(100);
+    viewer_->spinOnce(100);
     // while (!viewer_->wasStopped()) {
     //     viewer_->spinOnce(100);
     //     boost::this_thread::sleep(boost::posix_time::microseconds(1000));

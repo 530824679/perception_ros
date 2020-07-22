@@ -20,7 +20,8 @@
 ImmUkfPda::ImmUkfPda():
 target_id_(0),
 init_check_(false),
-frame_count_(0){
+frame_count_(0),
+tracking_frame_("world"){
 }
 
 ImmUkfPda::~ImmUkfPda(){
@@ -86,6 +87,12 @@ bool ImmUkfPda::Init(Json::Value params, std::string key){
             logger.Log(ERROR, "[%s]: Has not key named use_sukf in the tracker config.\n", __func__);
             return false;
         }
+        if (ukf_tracker_param.isMember("lane_direction_chi_thres") && ukf_tracker_param["lane_direction_chi_thres"].isDouble()) {
+            lane_direction_chi_threshold_ = ukf_tracker_param["lane_direction_chi_thres"].asFloat();
+        } else {
+            logger.Log(ERROR, "[%s]: Has not key named lane_direction_chi_thres in the tracker config.\n", __func__);
+            return false;
+        }
     }else{
         logger.Log(ERROR, "[%s]: Has not key named tracker in the perception config.\n", __func__);
     }
@@ -102,19 +109,18 @@ void ImmUkfPda::run(const perception_ros::DetectedObjectArray input,std::vector<
     tracker.x=detected_objects_output.objects[i].pose.position.x;
     tracker.y=detected_objects_output.objects[i].pose.position.y;
     tracker.z=detected_objects_output.objects[i].pose.position.z;
-    tracker.length=detected_objects_output.objects[i].dimensions.x;
-    tracker.width=detected_objects_output.objects[i].dimensions.y;
+    tracker.width=detected_objects_output.objects[i].dimensions.x;
+    tracker.length=detected_objects_output.objects[i].dimensions.y;
     tracker.height=detected_objects_output.objects[i].dimensions.z;
     tf::Quaternion quat;
     tf::quaternionMsgToTF(detected_objects_output.objects[i].pose.orientation,quat);
     double roll=0,pitch=0,yaw=0;
     tf::Matrix3x3(quat).getRPY(roll, pitch, yaw);
-    tracker.yaw=M_PI/2-yaw;
+    tracker.yaw=yaw;
     trackerinfo.push_back(tracker);
   }
 
 }
-
 
 bool ImmUkfPda::updateNecessaryTransform()
 {
@@ -135,6 +141,7 @@ geometry_msgs::Pose ImmUkfPda::getTransformedPose(const geometry_msgs::Pose& in_
   tf::poseTFToMsg(tf_stamp * transform, out_pose.pose);
   return out_pose.pose;
 }
+
 
 void ImmUkfPda::measurementValidation(const perception_ros::DetectedObjectArray& input, UKF& target,
                                       const bool second_init, const Eigen::VectorXd& max_det_z,
@@ -157,9 +164,11 @@ void ImmUkfPda::measurementValidation(const perception_ros::DetectedObjectArray&
 
     Eigen::VectorXd diff = meas - max_det_z;
     double nis = diff.transpose() * max_det_s.inverse() * diff;
+    
 
     if (nis < gating_threshold_)
     {
+      //std::cout<<"nis"<<nis<<std::endl;
       if (nis < smallest_nis)
       {
         smallest_nis = nis;
@@ -199,7 +208,7 @@ bool ImmUkfPda::updateDirection(const double smallest_nis, const perception_ros:
   bool use_lane_direction = false;
   target.is_direction_cv_available_ = false;
   target.is_direction_ctrv_available_ = false;
-
+  target.checkLaneDirectionAvailability(out_object, lane_direction_chi_threshold_, use_sukf_);
   return use_lane_direction;
 }
 
@@ -221,43 +230,43 @@ void ImmUkfPda::updateTargetWithAssociatedObject(const std::vector<perception_ro
 
 void ImmUkfPda::updateBehaviorState(const UKF& target, const bool use_sukf, perception_ros::DetectedObject& object)
 {
-  if(use_sukf)
+  if(use_sukf)//如果使用sukf，那么运动模型为匀速转弯
   {
     object.behavior_state = MotionModel::CTRV;
   }
-  else if (target.mode_prob_cv_ > target.mode_prob_ctrv_ && target.mode_prob_cv_ > target.mode_prob_rm_)
+  else if (target.mode_prob_cv_ > target.mode_prob_ctrv_ && target.mode_prob_cv_ > target.mode_prob_rm_)//如果匀速运动概率最大，那么就是匀速运动
   {
     object.behavior_state = MotionModel::CV;
   }
-  else if (target.mode_prob_ctrv_ > target.mode_prob_cv_ && target.mode_prob_ctrv_ > target.mode_prob_rm_)
+  else if (target.mode_prob_ctrv_ > target.mode_prob_cv_ && target.mode_prob_ctrv_ > target.mode_prob_rm_)//如果转弯概率大，那么就是转弯模型
   {
     object.behavior_state = MotionModel::CTRV;
   }
   else
   {
-    object.behavior_state = MotionModel::RM;
+    object.behavior_state = MotionModel::RM;//否则就是随机运动
   }
 }
 
 void ImmUkfPda::initTracker(const perception_ros::DetectedObjectArray& input, double timestamp)
 {
-  for (size_t i = 0; i < input.objects.size(); i++)
+  for (size_t i = 0; i < input.objects.size(); i++)//对输入中的所有物体进行初始化
   {
-    double px = input.objects[i].pose.position.x;
+    double px = input.objects[i].pose.position.x;//输入目标的中心点位置 x,y
     double py = input.objects[i].pose.position.y;
     Eigen::VectorXd init_meas = Eigen::VectorXd(2);
-    init_meas << px, py;
+    init_meas << px, py;//把 x,y 存入init_meas中
 
-    UKF ukf;
-    ukf.initialize(init_meas, timestamp, target_id_);
+    UKF ukf;//初始化UKF追踪器
+    ukf.initialize(init_meas, timestamp, target_id_);//ukf第一帧初始化的输入就是中心点坐标 时间戳 和 目标的id， 目标id从0开始到所有的输入目标的大小
     targets_.push_back(ukf);
     target_id_++;
   }
   timestamp_ = timestamp;
-  init_check_ = true;
+  init_check_ = true;//是否初始化改成已初始化
 }
 
-void ImmUkfPda::secondInit(UKF& target, const std::vector<perception_ros::DetectedObject>& object_vec, double dt)
+void ImmUkfPda::secondInit(UKF& target, const std::vector<perception_ros::DetectedObject>& object_vec, double dt)//第二次初始化的意思？？
 {
   if (object_vec.size() == 0)
   {
@@ -268,13 +277,13 @@ void ImmUkfPda::secondInit(UKF& target, const std::vector<perception_ros::Detect
   target.init_meas_ << target.x_merge_(0), target.x_merge_(1);
 
   // state update
-  double target_x = object_vec[0].pose.position.x;
+  double target_x = object_vec[0].pose.position.x;//检测的结果 x,y
   double target_y = object_vec[0].pose.position.y;
-  double target_diff_x = target_x - target.x_merge_(0);
+  double target_diff_x = target_x - target.x_merge_(0);//当前的检测值-目标的预测值
   double target_diff_y = target_y - target.x_merge_(1);
-  double target_yaw = atan2(target_diff_y, target_diff_x);
+  double target_yaw = atan2(target_diff_y, target_diff_x);//朝向角是根据前后两帧坐标的差的反三角来计算的？？
   double dist = sqrt(target_diff_x * target_diff_x + target_diff_y * target_diff_y);
-  double target_v = dist / dt;
+  double target_v = dist / dt;//target velocity calculation
 
   while (target_yaw > M_PI)
     target_yaw -= 2. * M_PI;
@@ -444,14 +453,14 @@ ImmUkfPda::arePointsClose(const geometry_msgs::Point& in_point_a,
                                 const geometry_msgs::Point& in_point_b,
                                 float in_radius)
 {
-  return (fabs(in_point_a.x - in_point_b.x) <= in_radius) && (fabs(in_point_a.y - in_point_b.y) <= in_radius);
+  return (fabs(in_point_a.x - in_point_b.x) <= in_radius) && (fabs(in_point_a.y - in_point_b.y) <= in_radius);//判断两个点是否在阈值范围内
 }
 
 bool
 ImmUkfPda::arePointsEqual(const geometry_msgs::Point& in_point_a,
                                const geometry_msgs::Point& in_point_b)
-{
-  return arePointsClose(in_point_a, in_point_b, CENTROID_DISTANCE);
+{//好像是关联直径，认为在某个直径范围内的点会被关联？？
+  return arePointsClose(in_point_a, in_point_b, CENTROID_DISTANCE);///////###########/////###########//CENTROID_DISTANCE need to revise
 }
 
 bool
@@ -472,34 +481,34 @@ perception_ros::DetectedObjectArray
 ImmUkfPda::removeRedundantObjects(const perception_ros::DetectedObjectArray& in_detected_objects,
                             const std::vector<size_t> in_tracker_indices)
 {
-  if (in_detected_objects.objects.size() != in_tracker_indices.size())//for exception
+  if (in_detected_objects.objects.size() != in_tracker_indices.size())//如果在检测的目标和追踪索引的大小不一致则返回
     return in_detected_objects;
   
   //std::cout<<"in_detected_objects.objects.size()"<<in_detected_objects.objects.size()<<std::endl;
 
-  perception_ros::DetectedObjectArray resulting_objects;
-  resulting_objects.header = in_detected_objects.header;
+  perception_ros::DetectedObjectArray resulting_objects;//最终的结果
+  resulting_objects.header = in_detected_objects.header;//头保持一致
 
-  std::vector<geometry_msgs::Point> centroids;
+  std::vector<geometry_msgs::Point> centroids;//质心？？
   //create unique points
   for(size_t i=0; i<in_detected_objects.objects.size(); i++)
   {
-    if(!isPointInPool(centroids, in_detected_objects.objects[i].pose.position))
+    if(!isPointInPool(centroids, in_detected_objects.objects[i].pose.position))//用来判断目标中是否有与之相对应的中心点
     {
       centroids.push_back(in_detected_objects.objects[i].pose.position);//if the point is not in pool, push them into pool.
       //std::cout<<"pose.position is:"<<in_detected_objects.objects[i].pose.position<<std::endl;
     }
   }
   //assign objects to the points
-  std::vector<std::vector<size_t>> matching_objects(centroids.size());
+  std::vector<std::vector<size_t>> matching_objects(centroids.size());//定义一个匹配的中心点数量大小的二维矩阵
   for(size_t k=0; k<in_detected_objects.objects.size(); k++)
   {
     const auto& object=in_detected_objects.objects[k];
     for(size_t i=0; i< centroids.size(); i++)
     {
-      if (arePointsClose(object.pose.position, centroids[i],merge_distance_threshold_))
-      {
-        matching_objects[i].push_back(k);//store index of matched object to this point
+      if (arePointsClose(object.pose.position, centroids[i],merge_distance_threshold_))//再判断目标位置和中心点之间的接近程度
+      { 
+        matching_objects[i].push_back(k);//store index of matched object to this point  
       }
     }
   }
@@ -530,7 +539,7 @@ ImmUkfPda::removeRedundantObjects(const perception_ros::DetectedObjectArray& in_
       size_t current_index = matching_objects[i][j];
       if(current_index != oldest_object_index)
       {
-        targets_[in_tracker_indices[current_index]].tracking_num_= TrackingState::Die;
+        targets_[in_tracker_indices[current_index]].tracking_num_= TrackingState::Die;//这便是删除的地方
       }
     }
     perception_ros::DetectedObject best_object;
@@ -552,50 +561,50 @@ void ImmUkfPda::makeOutput(const perception_ros::DetectedObjectArray& input,
                            const std::vector<bool> &matching_vec,
                            perception_ros::DetectedObjectArray& detected_objects_output)
 {
-  perception_ros::DetectedObjectArray tmp_objects;
-  tmp_objects.header = input.header;
-  std::vector<size_t> used_targets_indices;
+  perception_ros::DetectedObjectArray tmp_objects;//detectedobjectarray类型的局部变量 tmp_objects
+  tmp_objects.header = input.header;//把输入的header存入tmp_objecs
+  std::vector<size_t> used_targets_indices;//已使用的目标的索引
   for (size_t i = 0; i < targets_.size(); i++)
   {
 
-    double tx = targets_[i].x_merge_(0);
-    double ty = targets_[i].x_merge_(1);
+    double tx = targets_[i].x_merge_(0);//中心坐标 x
+    double ty = targets_[i].x_merge_(1);//中心坐标 y
 
-    double tv = targets_[i].x_merge_(2);
-    double tyaw = targets_[i].x_merge_(3);
-    double tyaw_rate = targets_[i].x_merge_(4);
+    double tv = targets_[i].x_merge_(2);//速度
+    double tyaw = targets_[i].x_merge_(3);//朝向角
+    double tyaw_rate = targets_[i].x_merge_(4);//朝向角变化率
 
     while (tyaw > M_PI)
       tyaw -= 2. * M_PI;
     while (tyaw < -M_PI)
       tyaw += 2. * M_PI;
 
-    tf::Quaternion q = tf::createQuaternionFromYaw(tyaw);
+    tf::Quaternion q = tf::createQuaternionFromYaw(tyaw);//创建四元数
 
-    perception_ros::DetectedObject dd;
-    dd = targets_[i].object_;
-    dd.id = targets_[i].ukf_id_;
+    perception_ros::DetectedObject dd;//临时变量 检测目标类型的变量
+    dd = targets_[i].object_;//目标i中存的目标参数
+    dd.id = targets_[i].ukf_id_;//将目标的id存入dd中
     //std::cout<<"targets id is:"<<dd.id<<std::endl;
-    dd.velocity.linear.x = tv;
+    dd.velocity.linear.x = tv;///##################///////////#######////// 这里可以对速度进行平滑
     //std::cout<<"tv is:"<<tv<<std::endl;
     dd.acceleration.linear.y = tyaw_rate;
-    dd.velocity_reliable = targets_[i].is_stable_;
+    dd.velocity_reliable = targets_[i].is_stable_;//如果目标稳定，那么速度可靠 位置可靠
     dd.pose_reliable = targets_[i].is_stable_;
 
 
-    if (!targets_[i].is_static_ && targets_[i].is_stable_)
+    if (!targets_[i].is_static_ && targets_[i].is_stable_)//如果目标不静止，且目标稳定
     {
       // Aligh the longest side of dimentions with the estimated orientation
-      if(targets_[i].object_.dimensions.x < targets_[i].object_.dimensions.y)
+      if(targets_[i].object_.dimensions.x < targets_[i].object_.dimensions.y)//把长宽值进行判断，使x为长，y为宽，这个长宽并不是预测的把
       {
         dd.dimensions.x = targets_[i].object_.dimensions.y;
         dd.dimensions.y = targets_[i].object_.dimensions.x;
       }
 
-      dd.pose.position.x = tx;
-      dd.pose.position.y = ty;
+      dd.pose.position.x = tx;//把tx存入位姿 x
+      dd.pose.position.y = ty;//把ty存入位姿 y
 
-      if (!std::isnan(q[0]))
+      if (!std::isnan(q[0]))//判断是否是无穷值 四元数的缺点？
         dd.pose.orientation.x = q[0];
       if (!std::isnan(q[1]))
         dd.pose.orientation.y = q[1];
@@ -604,10 +613,10 @@ void ImmUkfPda::makeOutput(const perception_ros::DetectedObjectArray& input,
       if (!std::isnan(q[3]))
         dd.pose.orientation.w = q[3];
     }
-    updateBehaviorState(targets_[i], true, dd);//choose the mode of ukf 
+    updateBehaviorState(targets_[i], use_sukf_, dd);//choose the mode of ukf ctrv,cv,rm
 
     if (targets_[i].is_stable_ || (targets_[i].tracking_num_ >= TrackingState::Init &&
-                                   targets_[i].tracking_num_ < TrackingState::Stable))
+                                   targets_[i].tracking_num_ < TrackingState::Stable))//tracking_num_ 还不清楚作用
     {
       tmp_objects.objects.push_back(dd);
       //std::cout<<"After filtering, the id is:"<<dd.id<<std::endl;
@@ -635,19 +644,19 @@ void ImmUkfPda::removeUnnecessaryTarget()
 void ImmUkfPda::tracker(const perception_ros::DetectedObjectArray& input,
                         perception_ros::DetectedObjectArray& detected_objects_output)
 {
-  double timestamp = input.header.stamp.toSec();
-  std::vector<bool> matching_vec(input.objects.size(), false);
+  double timestamp = input.header.stamp.toSec();//输入的时间戳
+  std::vector<bool> matching_vec(input.objects.size(), false);//初始化是否匹配 0，0,0,0,，，，0 数量为输入物体的数量
   //std::cout<<"input object size is:"<<input.objects.size()<<std::endl;
 
-  if (!init_check_)
+  if (!init_check_)//判断是否初始化，输入的第一帧默认初始化为0
   {
     //std::cout<<"init_check_:"<<init_check_<<std::endl;
-    initTracker(input, timestamp);
+    initTracker(input, timestamp);//初始化追踪器
     makeOutput(input, matching_vec, detected_objects_output);
     return;
   }
 
-  double dt = (timestamp - timestamp_);
+  double dt = (timestamp - timestamp_);//时间差
   timestamp_ = timestamp;
  
 
@@ -655,20 +664,21 @@ void ImmUkfPda::tracker(const perception_ros::DetectedObjectArray& input,
   // start UKF process
   for (size_t i = 0; i < targets_.size(); i++)
   {
-    targets_[i].is_stable_ = false;
-    targets_[i].is_static_ = false;
+    targets_[i].is_stable_ = false;//初始化默认不稳定
+    targets_[i].is_static_ = false;//初始化默认不静止
     //std::cout<<"tracking_num_ is:"<<targets_[i].tracking_num_<<std::endl;
     if (targets_[i].tracking_num_ == TrackingState::Die)
     {
-      continue;
+      continue;//如果这个目标已经Die 就继续
     }
 
     // prevent ukf not to explode
     //std::cout<<"prevent_explosion_threshold_"<<prevent_explosion_threshold_<<std::endl;
+    //determiniant() 求行列式
     if (targets_[i].p_merge_.determinant() > prevent_explosion_threshold_ ||
         targets_[i].p_merge_(4, 4) > prevent_explosion_threshold_)
     {
-      targets_[i].tracking_num_ = TrackingState::Die;
+      targets_[i].tracking_num_ = TrackingState::Die;//
       continue;
     }
     //std::cout<<"tracking_num_ is:"<<targets_[i].tracking_num_<<std::endl;

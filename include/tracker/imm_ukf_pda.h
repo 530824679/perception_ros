@@ -80,12 +80,12 @@ private:
   // // for vectormap assisted tarcking
   // bool use_vectormap_;
    //bool has_subscribed_vectormap_;
-  // double lane_direction_chi_threshold_;
+  double lane_direction_chi_threshold_;
   // double nearest_lane_distance_threshold_;
   // std::string vectormap_frame_;
 
  double merge_distance_threshold_;
- const double CENTROID_DISTANCE = 0.2;//distance to consider centroids the same
+ const double CENTROID_DISTANCE = 5;//distance to consider centroids the same   
 
   // std::string input_topic_;
   // std::string output_topic_;
@@ -181,7 +181,8 @@ public:
   ImmUkfPda();
   ~ImmUkfPda();
   bool Init(Json::Value params, std::string key);
-  void run(const perception_ros::DetectedObjectArray input,std::vector<InfoTracker> &trackerinfo,perception_ros::DetectedObjectArray &detected_objects_output);
+  void run(const perception_ros::DetectedObjectArray input,std::vector<InfoTracker> &trackerinfo,
+              perception_ros::DetectedObjectArray &detected_objects_output);
 };
 
 #endif /* OBJECT_TRACKING_IMM_UKF_JPDAF_H */

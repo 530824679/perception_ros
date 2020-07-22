@@ -33,6 +33,7 @@ perception_ros::DetectedObjectArray BBoxEstimator::Estimate(std::vector<pcl_util
     for (int i = 0; i < clusters.size(); i++) {
         //if(i > 0) break;
         auto cluster = clusters[i];
+        if(cluster.size()<10){ logger.Log(ERROR, "cluster.size is too small.\n"); break;}
         perception_ros::DetectedObject detected_object;
         //BBox box{};
         //BBox2D box2d{};
@@ -211,8 +212,7 @@ bool BBoxEstimator::CalcBBox(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<
     box2d.right_top_y=intersection_y_2;
     // box2d.left_top_x=(intersection_x_1+intersection_y_1)/2;
     // box2d.left_top_y=(intersection_y_1+intersection_y_2)/2;
-
-
+    
 
 
     // calc dimention of bounding box
@@ -223,7 +223,14 @@ bool BBoxEstimator::CalcBBox(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<
     Eigen::Vector2d diagonal_vec;
     diagonal_vec << intersection_x_1 - intersection_x_2, intersection_y_1 - intersection_y_2;
 
-    box.yaw =   M_PI/2-theta_star;
+    theta_star+= M_PI;
+    // normalize angle
+    while (theta_star > M_PI)
+        theta_star -= 2. * M_PI;
+    while (theta_star < -M_PI)
+        theta_star += 2. * M_PI;
+    box.yaw = theta_star;
+
     //box.yaw = std::atan2(e_1_star.y(), e_1_star.x());
     box.x = (intersection_x_1 + intersection_x_2) / 2.0;
     box.y = (intersection_y_1 + intersection_y_2) / 2.0;
@@ -313,14 +320,26 @@ bool BBoxEstimator::CalcBBox(pcl_util::PointCloudPtr &in_cloud_ptr, std::vector<
     //detected_object.dimensions.x = std::max(detected_object.dimensions.x, ep);
     //detected_object.dimensions.y = std::max(detected_object.dimensions.y, ep);
     
+    //calculate the length_width ratio
     float width_length_ratio=detected_object.dimensions.x/detected_object.dimensions.y;
     float length_width_ratio=detected_object.dimensions.y/detected_object.dimensions.x;
+    
     if(width_length_ratio>10||length_width_ratio>10){
         return false;
     }
 
+    if(detected_object.dimensions.x>20||detected_object.dimensions.y>10){
+        return false;
+    }
 
-    tf::Quaternion quat=tf::createQuaternionFromRPY(0.0, 0.0,M_PI-theta_star);
+    theta_star+= M_PI;
+    // normalize angle
+    while (theta_star > M_PI)
+        theta_star -= 2. * M_PI;
+    while (theta_star < -M_PI)
+        theta_star += 2. * M_PI;
+
+    tf::Quaternion quat=tf::createQuaternionFromRPY(0.0, 0.0,theta_star);
     tf::quaternionTFToMsg(quat, detected_object.pose.orientation);
     
     // box.yaw =   M_PI-theta_star;

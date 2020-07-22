@@ -20,17 +20,17 @@
 * Initializes Unscented Kalman filter
  */
 UKF::UKF()
-  : num_state_(5)
-  , num_lidar_state_(2)
-  , num_lidar_direction_state_(3)
-  , num_motion_model_(3)
-  , is_direction_cv_available_(false)
+  : num_state_(5)//状态值数量为5 [x,y,v,yaw,yaw_rate]
+  , num_lidar_state_(2)//激光雷达状态值数量为2 [x,y]
+  , num_lidar_direction_state_(3)//激光雷达方向状态值为3 [x,y,yaw]
+  , num_motion_model_(3) //运动模型数量 3
+  , is_direction_cv_available_(false) //这三个方向参数？？ 三个运动模型的初始运动方向是不存在的
   , is_direction_ctrv_available_(false)
   , is_direction_rm_available_(false)
-  , std_lane_direction_(0.15)
+  , std_lane_direction_(0.15)//这个是没有用的
 {
-  // initial state vector
-  x_merge_ = Eigen::MatrixXd(5, 1);//five state number. Which five values??
+  // initial state vector 需要更新的两个状态就是 均值和协方差
+  x_merge_ = Eigen::MatrixXd(5, 1);//five state number. Which five values?? x_merge_ is calculated by x_cv_ x_ctrv_ x_rm_
 
   // initial state vector
   x_cv_ = Eigen::MatrixXd(5, 1);
@@ -42,7 +42,7 @@ UKF::UKF()
   x_rm_ = Eigen::MatrixXd(5, 1);
 
   // initial covariance matrix
-  p_merge_ = Eigen::MatrixXd(5, 5);
+  p_merge_ = Eigen::MatrixXd(5, 5);//the covariance of three motion models
 
   // initial covariance matrix
   p_cv_ = Eigen::MatrixXd(5, 5);
@@ -70,7 +70,7 @@ UKF::UKF()
   time_ = 0.0;
 
   // predicted sigma points matrix
-  x_sig_pred_cv_ = Eigen::MatrixXd(num_state_, 2 * num_state_ + 1);
+  x_sig_pred_cv_ = Eigen::MatrixXd(num_state_, 2 * num_state_ + 1);//matrix size is rows: num_state_ cols: 2*num_state_+1
 
   // predicted sigma points matrix
   x_sig_pred_ctrv_ = Eigen::MatrixXd(num_state_, 2 * num_state_ + 1);
@@ -79,7 +79,7 @@ UKF::UKF()
   x_sig_pred_rm_ = Eigen::MatrixXd(num_state_, 2 * num_state_ + 1);
 
   // create vector for weights
-  weights_c_ = Eigen::VectorXd(2 * num_state_ + 1);
+  weights_c_ = Eigen::VectorXd(2 * num_state_ + 1);// 权重向量
   weights_s_ = Eigen::VectorXd(2 * num_state_ + 1);
 
   // transition probability
@@ -111,15 +111,15 @@ UKF::UKF()
   mode_prob_ctrv_ = 0.33;
   mode_prob_rm_ = 0.33;
 
-  z_pred_cv_ = Eigen::VectorXd(2);
+  z_pred_cv_ = Eigen::VectorXd(2);//z只有两个值 所以应该是输入的x,y罗
   z_pred_ctrv_ = Eigen::VectorXd(2);
   z_pred_rm_ = Eigen::VectorXd(2);
 
-  s_cv_ = Eigen::MatrixXd(2, 2);
+  s_cv_ = Eigen::MatrixXd(2, 2);//计算卡尔曼增益
   s_ctrv_ = Eigen::MatrixXd(2, 2);
   s_rm_ = Eigen::MatrixXd(2, 2);
 
-  k_cv_ = Eigen::MatrixXd(5, 2);
+  k_cv_ = Eigen::MatrixXd(5, 2);//卡尔曼增益
   k_ctrv_ = Eigen::MatrixXd(5, 2);
   k_rm_ = Eigen::MatrixXd(5, 2);
 
@@ -136,7 +136,7 @@ UKF::UKF()
   object_.dimensions.y = 1.0;
 
   // for static classification
-  init_meas_ = Eigen::VectorXd(2);
+  init_meas_ = Eigen::VectorXd(2);//静态物分类
 
   x_merge_yaw_ = 0;
 
@@ -203,13 +203,17 @@ void UKF::initialize(const Eigen::VectorXd& z, const double timestamp, const int
   x_merge_ << 0, 0, 0, 0, 0.1;
 
   // init covariance matrix by hardcoding since no clue about initial state covrariance
-  p_merge_ << 0.5, 0, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 1;
+  p_merge_ << 0.5, 0, 0, 0, 0, 
+              0, 0.5, 0, 0, 0,
+              0, 0, 3, 0, 0, 
+              0, 0, 0, 10, 0, 
+              0, 0, 0, 0, 1;
 
   // set weights
   // reference from "The Unscented Kalman Filter for Nonlinear Estimation, Eric A. Wan and Rudolph van der Merwe, 2000"
   // alpha = 0.0025, beta = 2, k = 0
-  double alpha = 0.0025;
-  double beta = 2;
+  double alpha = 0.0025; // alpha and k control the spread of the sigma points. 
+  double beta = 2;//beta related to the distrobution of x
   double k = 0;
   lambda_ = alpha * alpha * (num_state_ + k) - num_state_;
   double weight_s_0 = lambda_ / (lambda_ + num_state_);
@@ -227,7 +231,7 @@ void UKF::initialize(const Eigen::VectorXd& z, const double timestamp, const int
   time_ = timestamp;
 
   x_merge_(0) = z(0);
-  x_merge_(1) = z(1);
+  x_merge_(1) = z(1);//z就是测量值 x_merge(px,py)=z(px,py)
 
   z_pred_cv_(0) = z(0);
   z_pred_cv_(1) = z(1);
@@ -285,7 +289,7 @@ void UKF::updateModeProb(const std::vector<double>& lambda_vec)
     mode_prob_rm_ = 0.0001;
 }
 
-void UKF::updateYawWithHighProb()
+void UKF::updateYawWithHighProb()//用概率较高的运动模型来更新yaw
 {
   if (mode_prob_cv_ > mode_prob_ctrv_)
   {
@@ -312,7 +316,7 @@ void UKF::updateYawWithHighProb()
   x_merge_(3) = x_merge_yaw_;
 }
 
-void UKF::mergeEstimationAndCovariance()
+void UKF::mergeEstimationAndCovariance()//融合估计值和协方差
 {
   x_merge_ = mode_prob_cv_ * x_cv_ + mode_prob_ctrv_ * x_ctrv_ + mode_prob_rm_ * x_rm_;
   while (x_merge_(3) > M_PI)
@@ -330,9 +334,9 @@ void UKF::mergeEstimationAndCovariance()
 
 void UKF::mixingProbability()
 {
-  double sumProb1 = mode_prob_cv_ * p1_[0] + mode_prob_ctrv_ * p2_[0] + mode_prob_rm_ * p3_[0];
-  double sumProb2 = mode_prob_cv_ * p1_[1] + mode_prob_ctrv_ * p2_[1] + mode_prob_rm_ * p3_[1];
-  double sumProb3 = mode_prob_cv_ * p1_[2] + mode_prob_ctrv_ * p2_[2] + mode_prob_rm_ * p3_[2];
+  double sumProb1 = mode_prob_cv_ * p1_[0] + mode_prob_ctrv_ * p2_[0] + mode_prob_rm_ * p3_[0];//p1 [0.9,0.05,0.05]
+  double sumProb2 = mode_prob_cv_ * p1_[1] + mode_prob_ctrv_ * p2_[1] + mode_prob_rm_ * p3_[1];//p2 [0.05,0.9,0.05]
+  double sumProb3 = mode_prob_cv_ * p1_[2] + mode_prob_ctrv_ * p2_[2] + mode_prob_rm_ * p3_[2];//p3 [0.05,0.05,0.9]
   mode_match_prob_cv2cv_ = mode_prob_cv_ * p1_[0] / sumProb1;
   mode_match_prob_ctrv2cv_ = mode_prob_ctrv_ * p2_[0] / sumProb1;
   mode_match_prob_rm2cv_ = mode_prob_rm_ * p3_[0] / sumProb1;
@@ -377,7 +381,8 @@ void UKF::interaction()
     x_rm_(3) -= 2. * M_PI;
   while (x_rm_(3) < -M_PI)
     x_rm_(3) += 2. * M_PI;
-
+  
+  //计算协方差
   p_cv_ = mode_match_prob_cv2cv_ * (p_pre_cv + (x_pre_cv - x_cv_) * (x_pre_cv - x_cv_).transpose()) +
           mode_match_prob_ctrv2cv_ * (p_pre_ctrv + (x_pre_ctrv - x_cv_) * (x_pre_ctrv - x_cv_).transpose()) +
           mode_match_prob_rm2cv_ * (p_pre_rm + (x_pre_rm - x_cv_) * (x_pre_rm - x_cv_).transpose());
@@ -394,7 +399,7 @@ void UKF::predictionSUKF(const double dt, const bool has_subscribed_vectormap)
   /*****************************************************************************
   *  Init covariance Q if it is necessary
   ****************************************************************************/
-  initCovarQs(dt, x_merge_(3));
+  initCovarQs(dt, x_merge_(3));//初始化噪声，噪声只和角度相关？？
   /*****************************************************************************
   *  Prediction Motion Model
   ****************************************************************************/
@@ -441,9 +446,9 @@ void UKF::predictionIMMUKF(const double dt, const bool has_subscribed_vectormap)
   }
 }
 
-void UKF::findMaxZandS(Eigen::VectorXd& max_det_z, Eigen::MatrixXd& max_det_s)
+void UKF::findMaxZandS(Eigen::VectorXd& max_det_z, Eigen::MatrixXd& max_det_s) //选择三种模式中s最大的z 也就是范围最大的
 {
-  double cv_det = s_cv_.determinant();
+  double cv_det = s_cv_.determinant();//计算行列式
   double ctrv_det = s_ctrv_.determinant();
   double rm_det = s_rm_.determinant();
 
@@ -630,7 +635,7 @@ void UKF::updateEachMotion(const double detection_probability, const double gate
 
     // update x and P
     Eigen::MatrixXd updated_x(x_cv_.rows(), x_cv_.cols());
-    updated_x = x + kalman_gain * sigma_x;
+    updated_x = x + kalman_gain * sigma_x;//12行
 
     updated_x(3) = normalizeAngle(updated_x(3));
 
@@ -785,7 +790,7 @@ void UKF::ctrv(const double p_x, const double p_y, const double v, const double 
     py_p = p_y + v * delta_t * sin(yaw);
   }
   double v_p = v;
-  double yaw_p = yaw + yawd * delta_t;
+  double yaw_p = yaw + yawd * delta_t;//角度是有变化率的
   double yawd_p = yawd;
 
   while (yaw_p > M_PI)
@@ -808,7 +813,7 @@ void UKF::cv(const double p_x, const double p_y, const double v, const double ya
   double px_p = p_x + v * cos(yaw) * delta_t;
   double py_p = p_y + v * sin(yaw) * delta_t;
   double v_p = v;
-  double yaw_p = yaw;
+  double yaw_p = yaw;//yaw是固定值，不变的
   double yawd_p = 0;
 
   state[0] = px_p;
@@ -826,7 +831,7 @@ void UKF::randomMotion(const double p_x, const double p_y, const double v, const
   double px_p = p_x;
   double py_p = p_y;
   double v_p = 0.0;
-  double yaw_p = yaw;
+  double yaw_p = yaw;//如果是随机运动，heading角等于yaw
   double yawd_p = 0;
 
   state[0] = px_p;
@@ -842,9 +847,9 @@ void UKF::initCovarQs(const double dt, const double yaw)
   {
     return;
   }
-  double dt_2 = dt * dt;
-  double dt_3 = dt_2 * dt;
-  double dt_4 = dt_3 * dt;
+  double dt_2 = dt * dt;//平方
+  double dt_3 = dt_2 * dt;//三次方
+  double dt_4 = dt_3 * dt;//四次方
   double cos_yaw = cos(yaw);
   double sin_yaw = sin(yaw);
   double cos_2_yaw = cos(yaw) * cos(yaw);
@@ -860,7 +865,7 @@ void UKF::initCovarQs(const double dt, const double yaw)
   double rm_var_a = std_a_rm_ * std_a_rm_;
   double rm_var_yawdd = std_rm_yawdd_ * std_rm_yawdd_;
 
-  q_cv_ << 0.5 * 0.5 * dt_4 * cos_2_yaw * cv_var_a, 0.5 * 0.5 * dt_4 * cos_sin * cv_var_a,
+  q_cv_ << 0.5 * 0.5 * dt_4 * cos_2_yaw * cv_var_a, 0.5 * 0.5 * dt_4 * cos_sin * cv_var_a, //5×5
       0.5 * dt_3 * cos_yaw * cv_var_a, 0, 0, 0.5 * 0.5 * dt_4 * cos_sin * cv_var_a,
       0.5 * 0.5 * dt_4 * sin_2_yaw * cv_var_a, 0.5 * dt_3 * sin_yaw * cv_var_a, 0, 0, 0.5 * dt_3 * cos_yaw * cv_var_a,
       0.5 * dt_3 * sin_yaw * cv_var_a, dt_2 * cv_var_a, 0, 0, 0, 0, 0, 0.5 * 0.5 * dt_4 * cv_var_yawdd,
@@ -1181,7 +1186,7 @@ void UKF::predictionLidarMeasurement(const int motion_ind, const int num_meas_st
       covariance_r = r_rm_;
   }
 
-  Eigen::MatrixXd z_sig = Eigen::MatrixXd(num_meas_state, 2 * num_state_ + 1);
+  Eigen::MatrixXd z_sig = Eigen::MatrixXd(num_meas_state, 2 * num_state_ + 1);//雷达的 num_lidar_direction_state_ 状态 x,y和yaw 对应第七行 概率机器人 p53
 
   for (int i = 0; i < 2 * num_state_ + 1; i++)
   {
@@ -1198,17 +1203,17 @@ void UKF::predictionLidarMeasurement(const int motion_ind, const int num_meas_st
     }
   }
 
-  Eigen::VectorXd z_pred = Eigen::VectorXd(num_meas_state);
+  Eigen::VectorXd z_pred = Eigen::VectorXd(num_meas_state);//  第8行
   z_pred.fill(0.0);
   for (int i = 0; i < 2 * num_state_ + 1; i++)
   {
-    z_pred = z_pred + weights_s_(i) * z_sig.col(i);
+    z_pred = z_pred + weights_s_(i) * z_sig.col(i);//z的预测值
   }
 
   if (num_meas_state == num_lidar_direction_state_)
     z_pred(2) = normalizeAngle(z_pred(2));
 
-  Eigen::MatrixXd s_pred = Eigen::MatrixXd(num_meas_state, num_meas_state);
+  Eigen::MatrixXd s_pred = Eigen::MatrixXd(num_meas_state, num_meas_state);//9行
   s_pred.fill(0.0);
   for (int i = 0; i < 2 * num_state_ + 1; i++)
   {
@@ -1280,7 +1285,7 @@ double UKF::calculateNIS(const perception_ros::DetectedObject& in_object, const 
   }
 
   // Pick up yaw estimation and yaw variance
-  double diff = in_object.angle - z_pred(2);
+  double diff = in_object.angle - z_pred(2);//
   double nis = diff * s_pred(2, 2) * diff;
 
   return nis;

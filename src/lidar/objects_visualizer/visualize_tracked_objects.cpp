@@ -92,12 +92,13 @@ std_msgs::ColorRGBA VisualizeDetectedObjects::ParseColor(const std::vector<doubl
   return color;
 }
 
-void VisualizeDetectedObjects::run(const perception_ros::DetectedObjectArray in_objects,visualization_msgs::MarkerArray &visualization_markers)
+void VisualizeDetectedObjects::run(const perception_ros::DetectedObjectArray in_objects,ros::Publisher publisher)
 {
-  visualization_msgs::MarkerArray label_markers, arrow_markers, centroid_markers, polygon_hulls, bounding_boxes,
-                                  object_models;
-
   // visualization_msgs::MarkerArray visualization_markers;
+  visualization_markers.markers.empty();
+  label_markers.markers.empty();
+  arrow_markers.markers.empty();
+  bounding_boxes.markers.empty();
 
   marker_id_ = 0;
 
@@ -122,6 +123,7 @@ void VisualizeDetectedObjects::run(const perception_ros::DetectedObjectArray in_
   //                                      centroid_markers.markers.begin(), centroid_markers.markers.end());
 
   // return visualization_markers;
+  publisher.publish(visualization_markers);
 
 }
 

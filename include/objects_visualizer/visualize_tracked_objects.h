@@ -36,6 +36,11 @@ private:
 
   int marker_id_;
 
+  visualization_msgs::MarkerArray label_markers, arrow_markers, centroid_markers, polygon_hulls, bounding_boxes,
+                                  object_models;
+  //MakerArray for visualization
+  visualization_msgs::MarkerArray visualization_markers;
+
   std_msgs::ColorRGBA label_color_, box_color_, hull_color_, arrow_color_, centroid_color_, model_color_;
 
   std::string input_topic_, ros_namespace_;
@@ -72,7 +77,7 @@ private:
   VisualizeDetectedObjects();
   ~VisualizeDetectedObjects();
   bool Init(Json::Value params, std::string key);
-  void run(const perception_ros::DetectedObjectArray in_objects,visualization_msgs::MarkerArray &visualization_markers);
+  void run(const perception_ros::DetectedObjectArray in_objects,ros::Publisher publisher);
 };
 
 #endif  // _VISUALIZEDETECTEDOBJECTS_H_
