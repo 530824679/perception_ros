@@ -63,6 +63,45 @@ float Tracking::CalculateIou(const BBox& det, const Tracker& track) {
     return iou;
 }
 
+
+float Tracking::CalculateRotateIOU(const BBox& det, const Tracker& track) {
+    auto trk = track.GetStateAsBbox();
+    
+    cv::Point2f det_center(det.x,det.y);
+    cv::Size2f det_size(det.dx,det.dy);
+    float tmp_det_angle=det.yaw;
+    if (tmp_det_angle < 0)
+        {tmp_det_angle+=2. * M_PI;}
+    float det_angle=tmp_det_angle/(2*M_PI)*360;
+    cv::RotatedRect det_rectangle(det_center,det_size,det_angle);
+
+    cv::Point2f trk_center(trk.x,trk.y);
+    cv::Size2f trk_size(trk.dx,trk.dy);
+    float tmp_trk_angle=trk.yaw;
+    if(tmp_trk_angle<0){
+        tmp_trk_angle+=2. * M_PI;
+    }
+    float trk_angle=tmp_trk_angle/(2*M_PI)*360;
+    cv::RotatedRect trk_rectangle(trk_center,trk_size,trk_angle);
+
+    float det_area = det_rectangle.size.width * det_rectangle.size.height;
+    float trk_area = trk_rectangle.size.width * trk_rectangle.size.height;
+    std::vector<cv::Point2f> vertices;
+ 
+    int intersectionType = cv::rotatedRectangleIntersection(det_rectangle, trk_rectangle, vertices);
+    if (vertices.size()==0)
+        return 0.0;
+    else{
+        std::vector<cv::Point2f> order_pts;
+        // 找到交集（交集的区域），对轮廓的各个点进行排序
+        cv::convexHull(cv::Mat(vertices), order_pts, true);
+        double inter_area = cv::contourArea(order_pts);
+        float iou = (float) (inter_area / (det_area + trk_area - inter_area + 0.0001));
+        return iou;
+    }
+
+}
+
 void Tracking::HungarianMatching(const std::vector<std::vector<float>>& iou_matrix, size_t nrows, size_t ncols, std::vector<std::vector<float>>& association) {
     Matrix<float> matrix(nrows, ncols);
     // Initialize matrix with IOU values
@@ -113,7 +152,8 @@ void Tracking::AssociateDetectionsToTrackers(const std::vector<BBox> &bboxes,
     for (size_t i = 0; i < bboxes.size(); i++) {
         size_t j = 0;
         for (const auto& trk : tracks) {
-            iou_matrix[i][j] = CalculateIou(bboxes[i], trk.second);
+            //iou_matrix[i][j] = CalculateIou(bboxes[i], trk.second);
+            iou_matrix[i][j] = CalculateRotateIOU(bboxes[i], trk.second);
             j++;
         }
     }
@@ -127,7 +167,7 @@ void Tracking::AssociateDetectionsToTrackers(const std::vector<BBox> &bboxes,
         for (const auto& trk : tracks) {
             if (0 == association[i][j]) {
                 // Filter out matched with low IOU
-                if (iou_matrix[i][j] >= 0) {//IOU threshold
+                if (iou_matrix[i][j] >= 0.2) {//IOU threshold
                     matched[trk.first] = bboxes[i];
                     matched_flag = true;
                 }
@@ -198,10 +238,15 @@ int Tracking::track(std::map<int, Tracker> &tracks, std::vector<BBox> bboxes, in
             tracker_info_msg.x=bbox.x;
             tracker_info_msg.y=bbox.y;
             tracker_info_msg.z=1;
-            tracker_info_msg.length=bbox.dx;
-            tracker_info_msg.width=bbox.dy;
+            tracker_info_msg.length=bbox.dy;
+            tracker_info_msg.width=bbox.dx;
             tracker_info_msg.height=2;
-            tracker_info_msg.yaw=M_PI/2-bbox.yaw;//here problem
+            if(bbox.yaw > M_PI)
+              {tracker_info_msg.yaw=bbox.yaw - 2. * M_PI;}
+            if (bbox.yaw < -M_PI)
+              {tracker_info_msg.yaw=bbox.yaw + 2. * M_PI;}
+              
+            tracker_info_msg.yaw=bbox.yaw;
             object_num++;
         }
         trackerinfo.push_back(tracker_info_msg);

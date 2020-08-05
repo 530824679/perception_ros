@@ -46,6 +46,11 @@ as well as in the event of applications for industrial property rights.
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
 
+//opencv include
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/opencv.hpp>
 // json include
 #include <jsoncpp/json/json.h>
 
@@ -102,7 +107,6 @@ private:
     std::shared_ptr<Tracking> tracking_; //kf_tracking_
     std::shared_ptr<ImmUkfPda> ukf_tracking_;//ukf_tracking_
     std::shared_ptr<VisualizeDetectedObjects> visualization_;
-    //ImmUkfPda ukf_trackig_;
 
     // Point clouds
     pcl_util::PointCloudPtr filtered_cloud_ptr_;
@@ -116,10 +120,8 @@ private:
     perception_ros::DetectedObjectArray detetcted_object_array_;
     perception_ros::ObjectInfoArray object_info_array_;
 
-
     // Subscriber
     ros::Subscriber lidar_subscriber_;
-    tf::TransformListener tf_listener;
 
     // Data publisher
     ros::Publisher filtered_cloud_publisher_;

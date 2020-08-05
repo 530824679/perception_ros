@@ -35,6 +35,7 @@ endif ()
 find_package(OpenCV)
 if(OpenCV_FOUND)
     link_directories(${OpenCV_LIBRARY_DIRS})
+    link_directories(${OpenCV_INCLUDE_DIRS})
     add_definitions(${OpenCV_DEFINITIONS})
 endif ()
 

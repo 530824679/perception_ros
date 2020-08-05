@@ -23,6 +23,11 @@ as well as in the event of applications for industrial property rights.
 // json include
 #include <jsoncpp/json/json.h>
 
+//opencv include
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/opencv.hpp>
 // local include
 #include "common/logging.h"
 #include "munkres.h"
@@ -41,6 +46,7 @@ public:
     void Process(std::vector<BBox> bboxes, perception_ros::ObjectInfoArray &object_array,std::vector<InfoTracker>& trackerinfo);
     bool Init(Json::Value params, std::string key);
     float CalculateIou(const BBox& det, const Tracker& track);
+    float CalculateRotateIOU(const BBox& det,const Tracker& track);
     void HungarianMatching(const std::vector<std::vector<float>>& iou_matrix, size_t nrows, size_t ncols, std::vector<std::vector<float>>& association);
     void AssociateDetectionsToTrackers(const std::vector<BBox> &bboxes,
                                        std::map<int, Tracker>& tracks,

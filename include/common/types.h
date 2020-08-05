@@ -117,6 +117,9 @@ struct InfoTracker{
     float height;
 
     float yaw;
+
+    float v_x;
+    float v_y;
 };
 
 struct Quaternion{//四元数

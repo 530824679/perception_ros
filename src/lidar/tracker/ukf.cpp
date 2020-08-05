@@ -726,8 +726,8 @@ void UKF::uppateForCTRV()
 
   if (is_direction_ctrv_available_)
   {
-    x_ctrv_.col(0) = x + k_lidar_direction_ctrv_ * (lidar_direction_ctrv_meas_ - z_pred_lidar_direction_ctrv_);
-    p_ctrv_ = p_ctrv_ - k_lidar_direction_ctrv_ * s_lidar_direction_ctrv_ * k_lidar_direction_ctrv_.transpose();
+    x_ctrv_.col(0) = x + k_lidar_direction_ctrv_ * (lidar_direction_ctrv_meas_ - z_pred_lidar_direction_ctrv_);//12行
+    p_ctrv_ = p_ctrv_ - k_lidar_direction_ctrv_ * s_lidar_direction_ctrv_ * k_lidar_direction_ctrv_.transpose();//13行
     x_merge_.col(0) = x_ctrv_.col(0);
   }
   else
@@ -779,7 +779,7 @@ void UKF::ctrv(const double p_x, const double p_y, const double v, const double 
   double px_p, py_p;
 
   // avoid division by zero
-  if (fabs(yawd) > 0.001)
+  if (fabs(yawd) > 0.001)//如果存在角度的变化率
   {
     px_p = p_x + v / yawd * (sin(yaw + yawd * delta_t) - sin(yaw));
     py_p = p_y + v / yawd * (cos(yaw) - cos(yaw + yawd * delta_t));
@@ -965,7 +965,7 @@ void UKF::predictionMotion(const double delta_t, const int model_ind)
     else
       randomMotion(p_x, p_y, v, yaw, yawd, delta_t, state);
 
-    // write predicted sigma point into right column
+    // write predicted sigma point into right column 5×11的矩阵
     x_sig_pred(0, i) = state[0];
     x_sig_pred(1, i) = state[1];
     x_sig_pred(2, i) = state[2];
@@ -1001,7 +1001,7 @@ void UKF::predictionMotion(const double delta_t, const int model_ind)
     p = p + weights_c_(i) * x_diff * x_diff.transpose();
   }
 
-  p = p + q;
+  p = p + q;//q应该是噪声
 
   /*****************************************************************************
   *  Update model parameters
@@ -1014,9 +1014,9 @@ void UKF::predictionMotion(const double delta_t, const int model_ind)
   }
   else if (model_ind == MotionModel::CTRV)
   {
-    x_ctrv_.col(0) = x;
-    p_ctrv_ = p;
-    x_sig_pred_ctrv_ = x_sig_pred;
+    x_ctrv_.col(0) = x;//状态
+    p_ctrv_ = p;//协方差
+    x_sig_pred_ctrv_ = x_sig_pred;//均值
   }
   else
   {

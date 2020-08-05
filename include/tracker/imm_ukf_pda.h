@@ -37,6 +37,7 @@
 #include "common/logging.h"
 #include "perception_ros/DetectedObject.h"
 #include "perception_ros/DetectedObjectArray.h"
+#include "tracker/munkres.h"
 
 #include "ukf.h"
 
@@ -69,44 +70,17 @@ private:
   // whether if benchmarking tracking result
   // bool is_benchmark_;
   int frame_count_;
-  // std::string kitti_data_dir_;
 
-  // // for benchmark
-  //  std::string result_file_path_;
-
-  // // prevent explode param for ukf
   double prevent_explosion_threshold_;
 
-  // // for vectormap assisted tarcking
-  // bool use_vectormap_;
-   //bool has_subscribed_vectormap_;
+
   double lane_direction_chi_threshold_;
-  // double nearest_lane_distance_threshold_;
-  // std::string vectormap_frame_;
+
 
  double merge_distance_threshold_;
- const double CENTROID_DISTANCE = 5;//distance to consider centroids the same   
+ const double CENTROID_DISTANCE = 0.2;//distance to consider centroids the same  如果在这个直径范围内，就不认为是age新目标了，也就不会被追踪，当这个值为0时，
+                                      //所有的检测输入都会被追踪
 
-  // std::string input_topic_;
-  // std::string output_topic_;
-
-  // std::string tracking_frame_;
-
-  // tf::TransformListener tf_listener_;
-  // tf::StampedTransform local2global_;
-  //tf::StampedTransform tracking_frame2lane_frame_;
-  //tf::StampedTransform lane_frame2tracking_frame_;
-
-  // ros::NodeHandle node_handle_;
-  // ros::NodeHandle private_nh_;
-  // ros::Subscriber sub_detected_array_;
-  //std_msgs::Header input_header_;
-
-  // void callback(const perception_ros::DetectedObjectArray& input);
-
-  //void transformPoseToGlobal(const perception_ros::DetectedObjectArray& input,
-                             //perception_ros::DetectedObjectArray& transformed_input);
-  //void transformPoseToLocal(perception_ros::DetectedObjectArray& detected_objects_output);
 
   geometry_msgs::Pose getTransformedPose(const geometry_msgs::Pose& in_pose,
                                                 const tf::StampedTransform& tf_stamp);
@@ -128,6 +102,14 @@ private:
   bool probabilisticDataAssociation(const perception_ros::DetectedObjectArray& input, const double dt,
                                     std::vector<bool>& matching_vec,
                                     std::vector<perception_ros::DetectedObject>& object_vec, UKF& target);
+
+  //float CalculateIou(const BBox& det, const Tracker& track);
+  void HungarianMatching(const std::vector<std::vector<float>>& iou_matrix, size_t nrows, size_t ncols, std::vector<std::vector<float>>& association);
+
+  bool hungarianDataAssocaition(const perception_ros::DetectedObjectArray& input, const double dt,
+                                    std::vector<bool>& matching_vec,
+                                    std::vector<perception_ros::DetectedObject>& object_vec, UKF& target);
+
   void makeNewTargets(const double timestamp, const perception_ros::DetectedObjectArray& input,
                       const std::vector<bool>& matching_vec);
 
@@ -149,8 +131,6 @@ private:
 
   bool storeObjectWithNearestLaneDirection(const perception_ros::DetectedObject& in_object,
                                        perception_ros::DetectedObject& out_object);
-
-  //void checkVectormapSubscription();
 
   perception_ros::DetectedObjectArray
   removeRedundantObjects(const perception_ros::DetectedObjectArray& in_detected_objects,

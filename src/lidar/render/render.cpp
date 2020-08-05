@@ -66,6 +66,9 @@ void Render::RenderTrackBBox(pcl_util::PCLVisualizerPtr &viewer, InfoTracker box
     std::string cube = "box" + std::to_string(id);
     std::string line = "line" + std::to_string(id);
     std::string text = "text" + std::to_string(id);
+    std::string velocity_x="velocity_x"+std::to_string(id);
+    std::string velocity_y="velocity_y"+std::to_string(id);
+
     Eigen::Vector3f bboxTransform(box.x, box.y, box.z);
     Eigen::Matrix3f matrix = Eigen::Matrix3f::Identity();
     matrix << -cos(box.yaw), sin(box.yaw), 0,
@@ -82,11 +85,21 @@ void Render::RenderTrackBBox(pcl_util::PCLVisualizerPtr &viewer, InfoTracker box
     endPoint.x=box.x+3*cos(box.yaw);
     endPoint.y=box.y+3*sin(box.yaw);
     endPoint.z=box.z;
+
+    pcl::PointXYZ midPoint;
+    midPoint.x=box.x+1.5*cos(box.yaw);
+    midPoint.y=box.y+1.5*sin(box.yaw);
+    midPoint.z=box.z;
     
+
     std::string text_show="id:"+std::to_string(box.id);
+    std::string velocity_show_x="velocity_x:"+std::to_string(box.v_x);
+    //std::string velocity_show_y="velocity_y:"+std::to_string(box.v_y);
     viewer->addCube(bboxTransform, bboxQuaternion, box.width, box.length, box.height, cube);
     viewer->addLine(startPoint,endPoint,134,121,140,line);
     viewer->addText3D(text_show,startPoint,0.8,123,22,44,text);
+    viewer->addText3D(velocity_show_x,endPoint,0.8,0,222,33,velocity_x);
+    //viewer->addText3D(velocity_show_y,midPoint,0.8,0,222,33,velocity_y);
     viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_REPRESENTATION, pcl::visualization::PCL_VISUALIZER_REPRESENTATION_WIREFRAME, cube);
     viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, color.GetR(), color.GetG(), color.GetB(), cube);
     viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 1, cube);

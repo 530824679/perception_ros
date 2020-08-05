@@ -62,7 +62,8 @@ add_library(tracker_lib STATIC
         ${PROJECT_SOURCE_DIR}/src/lidar/tracker/ukf.cpp
         ${PROJECT_SOURCE_DIR}/src/lidar/tracker/imm_ukf_pda.cpp)
 target_link_libraries(tracker_lib
-        common_lib)
+        common_lib
+        ${OpenCV_LIBRARIES})
 
 ########## render lib ##########
 add_library(render_lib STATIC

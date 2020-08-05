@@ -33,7 +33,7 @@ perception_ros::DetectedObjectArray BBoxEstimator::Estimate(std::vector<pcl_util
     for (int i = 0; i < clusters.size(); i++) {
         //if(i > 0) break;
         auto cluster = clusters[i];
-        if(cluster.size()<10){ logger.Log(ERROR, "cluster.size is too small.\n"); break;}
+        if(cluster.size()<5){ logger.Log(ERROR, "cluster.size is too small.\n"); break;}
         perception_ros::DetectedObject detected_object;
         //BBox box{};
         //BBox2D box2d{};

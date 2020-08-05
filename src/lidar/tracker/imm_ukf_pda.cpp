@@ -20,8 +20,7 @@
 ImmUkfPda::ImmUkfPda():
 target_id_(0),
 init_check_(false),
-frame_count_(0),
-tracking_frame_("world"){
+frame_count_(0){
 }
 
 ImmUkfPda::~ImmUkfPda(){
@@ -112,6 +111,9 @@ void ImmUkfPda::run(const perception_ros::DetectedObjectArray input,std::vector<
     tracker.width=detected_objects_output.objects[i].dimensions.x;
     tracker.length=detected_objects_output.objects[i].dimensions.y;
     tracker.height=detected_objects_output.objects[i].dimensions.z;
+    tracker.v_x=detected_objects_output.objects[i].velocity.linear.x;
+    tracker.v_y=detected_objects_output.objects[i].velocity.linear.y;
+
     tf::Quaternion quat;
     tf::quaternionMsgToTF(detected_objects_output.objects[i].pose.orientation,quat);
     double roll=0,pitch=0,yaw=0;
@@ -149,39 +151,40 @@ void ImmUkfPda::measurementValidation(const perception_ros::DetectedObjectArray&
                                       std::vector<perception_ros::DetectedObject>& object_vec,
                                       std::vector<bool>& matching_vec)
 {
-  // alert: different from original imm-pda filter, here picking up most likely measurement
-  // if making it allows to have more than one measurement, you will see non semipositive definite covariance
+  // alert: different from original imm-pda filter, here picking up most likely measurement 选取概率最高的测量值？？
+  // if making it allows to have more than one measurement, you will see non semipositive definite covariance 
+  //协方差矩阵是半正定的，如果允许超过一个一个测量值，那么他就是非半正定的
   bool exists_smallest_nis_object = false;
   double smallest_nis = std::numeric_limits<double>::max();
   int smallest_nis_ind = 0;
-  for (size_t i = 0; i < input.objects.size(); i++)
+  for (size_t i = 0; i < input.objects.size(); i++)//所有的检测值和测量值进行匹配
   {
-    double x = input.objects[i].pose.position.x;
+    double x = input.objects[i].pose.position.x;//检测目标的输入位置输入
     double y = input.objects[i].pose.position.y;
 
     Eigen::VectorXd meas = Eigen::VectorXd(2);
     meas << x, y;
 
-    Eigen::VectorXd diff = meas - max_det_z;
-    double nis = diff.transpose() * max_det_s.inverse() * diff;
-    
-
+    Eigen::VectorXd diff = meas - max_det_z;//检测值-测量值？？ z是预测的观测值
+    double nis = diff.transpose() * max_det_s.inverse() * diff;//max_det_s其中的不是3吗??  检测值和观测的测量值之间的关联程度
+    //有效门限值
+    //std::cout<<"nis:"<<nis<<std::endl;
     if (nis < gating_threshold_)
     {
       //std::cout<<"nis"<<nis<<std::endl;
       if (nis < smallest_nis)
       {
         smallest_nis = nis;
-        target.object_ = input.objects[i];
+        target.object_ = input.objects[i];//这里已经开始匹配 关联了吧 找到追踪目标对应的检测目标
         smallest_nis_ind = i;
         exists_smallest_nis_object = true;
       }
     }
   }
-  if (exists_smallest_nis_object)
+  if (exists_smallest_nis_object)//寻找最小的nis目标
   {
-    matching_vec[smallest_nis_ind] = true;
-    if (false && false)
+    matching_vec[smallest_nis_ind] = true;//如果前面的关联已经成功，那么就是匹配上了
+    if (false && false)//这里就是不用方向的意思
     {
       perception_ros::DetectedObject direction_updated_object;
       bool use_direction_meas =
@@ -197,7 +200,7 @@ void ImmUkfPda::measurementValidation(const perception_ros::DetectedObjectArray&
     }
     else
     {
-      object_vec.push_back(target.object_);
+      object_vec.push_back(target.object_);//匹配上了就推入
     }
   }
 }
@@ -266,19 +269,27 @@ void ImmUkfPda::initTracker(const perception_ros::DetectedObjectArray& input, do
   init_check_ = true;//是否初始化改成已初始化
 }
 
-void ImmUkfPda::secondInit(UKF& target, const std::vector<perception_ros::DetectedObject>& object_vec, double dt)//第二次初始化的意思？？
+void ImmUkfPda::secondInit(UKF& target, const std::vector<perception_ros::DetectedObject>& object_vec, double dt)//就是update更新的意思把
 {
-  if (object_vec.size() == 0)
+  if (object_vec.size() == 0)//如果没有匹配上 那么taget中的数量是0？？？
   {
     target.tracking_num_ = TrackingState::Die;
     return;
   }
   // record init measurement for env classification
   target.init_meas_ << target.x_merge_(0), target.x_merge_(1);
+  
 
   // state update
   double target_x = object_vec[0].pose.position.x;//检测的结果 x,y
   double target_y = object_vec[0].pose.position.y;
+  
+  // tf::Quaternion quat;
+  // tf::quaternionMsgToTF(object_vec[0].pose.orientation,quat);
+  // double roll=0,pitch=0,yaw=0;
+  // tf::Matrix3x3(quat).getRPY(roll, pitch, yaw);
+  // double detected_target_yaw=yaw;
+
   double target_diff_x = target_x - target.x_merge_(0);//当前的检测值-目标的预测值
   double target_diff_y = target_y - target.x_merge_(1);
   double target_yaw = atan2(target_diff_y, target_diff_x);//朝向角是根据前后两帧坐标的差的反三角来计算的？？
@@ -350,8 +361,8 @@ bool ImmUkfPda::probabilisticDataAssociation(const perception_ros::DetectedObjec
   
   if (use_sukf_)
   {
-    max_det_z = target.z_pred_ctrv_;
-    max_det_s = target.s_ctrv_;
+    max_det_z = target.z_pred_ctrv_;//测量的均值
+    max_det_s = target.s_ctrv_;//测量的方差
     det_s = max_det_s.determinant();
   }
   else
@@ -362,7 +373,7 @@ bool ImmUkfPda::probabilisticDataAssociation(const perception_ros::DetectedObjec
   }
 
   // prevent ukf not to explode
-  if (std::isnan(det_s) || det_s > prevent_explosion_threshold_)
+  if (std::isnan(det_s) || det_s > prevent_explosion_threshold_)//如果方差超过阈值，那么目标的状态是死亡
   {
     target.tracking_num_ = TrackingState::Die;
     success = false;
@@ -370,7 +381,7 @@ bool ImmUkfPda::probabilisticDataAssociation(const perception_ros::DetectedObjec
   }
 
   bool is_second_init;
-  if (target.tracking_num_ == TrackingState::Init)
+  if (target.tracking_num_ == TrackingState::Init)//如果已经进行初始化了，那么就不需要再接着进行初始化，可以进行更新了
   {
     is_second_init = true;
   }
@@ -379,11 +390,12 @@ bool ImmUkfPda::probabilisticDataAssociation(const perception_ros::DetectedObjec
     is_second_init = false;
   }
 
-  // measurement gating
+  // measurement gating input:检测输入 target:追踪器里的目标 max_det_z:最大的均值 max_det_s:最大的方差 object_vec 
+  //一个空的目标向量 matching_vec 是判断输入和目标是否匹配上
   measurementValidation(input, target, is_second_init, max_det_z, max_det_s, object_vec, matching_vec);
 
-  // second detection for a target: update v and yaw
-  if (is_second_init)
+  //second detection for a target: update v and yaw 是不是已经die了又找回呢？？ 更新速度和角度的，如果注释了 应该就是默认使用检测的角度？？
+  if (is_second_init)//二次初始化了哦
   {
     secondInit(target, object_vec, dt);
     success = false;
@@ -493,7 +505,7 @@ ImmUkfPda::removeRedundantObjects(const perception_ros::DetectedObjectArray& in_
   //create unique points
   for(size_t i=0; i<in_detected_objects.objects.size(); i++)
   {
-    if(!isPointInPool(centroids, in_detected_objects.objects[i].pose.position))//用来判断目标中是否有与之相对应的中心点
+    if(!isPointInPool(centroids, in_detected_objects.objects[i].pose.position))//如果中心点的距离不是很近，就推入
     {
       centroids.push_back(in_detected_objects.objects[i].pose.position);//if the point is not in pool, push them into pool.
       //std::cout<<"pose.position is:"<<in_detected_objects.objects[i].pose.position<<std::endl;
@@ -592,7 +604,8 @@ void ImmUkfPda::makeOutput(const perception_ros::DetectedObjectArray& input,
     dd.pose_reliable = targets_[i].is_stable_;
 
 
-    if (!targets_[i].is_static_ && targets_[i].is_stable_)//如果目标不静止，且目标稳定
+    //if (!targets_[i].is_static_ && targets_[i].is_stable_)//如果目标不静止，且目标稳定
+    if (targets_[i].is_stable_)
     {
       // Aligh the longest side of dimentions with the estimated orientation
       if(targets_[i].object_.dimensions.x < targets_[i].object_.dimensions.y)//把长宽值进行判断，使x为长，y为宽，这个长宽并不是预测的把
@@ -678,11 +691,11 @@ void ImmUkfPda::tracker(const perception_ros::DetectedObjectArray& input,
     if (targets_[i].p_merge_.determinant() > prevent_explosion_threshold_ ||
         targets_[i].p_merge_(4, 4) > prevent_explosion_threshold_)
     {
-      targets_[i].tracking_num_ = TrackingState::Die;//
+      targets_[i].tracking_num_ = TrackingState::Die;//如果目标的行列式的大小已经超过了阈值，那么状态就设置为die
       continue;
     }
     //std::cout<<"tracking_num_ is:"<<targets_[i].tracking_num_<<std::endl;
-    targets_[i].prediction(use_sukf_, false, dt);
+    targets_[i].prediction(use_sukf_, false, dt);//计算一直到第10行
 
     std::vector<perception_ros::DetectedObject> object_vec;
     bool success = probabilisticDataAssociation(input, dt, matching_vec, object_vec, targets_[i]);
@@ -692,7 +705,7 @@ void ImmUkfPda::tracker(const perception_ros::DetectedObjectArray& input,
       continue;
     }
 
-    targets_[i].update(use_sukf_,  detection_probability_, gate_probability_, gating_threshold_, object_vec);
+    targets_[i].update(use_sukf_,  detection_probability_, gate_probability_, gating_threshold_, object_vec);//更新卡尔曼增益，更新测量值，更新均值和方差
   }
   // end UKF process
 
