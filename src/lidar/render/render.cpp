@@ -135,3 +135,19 @@ void Render::RenderBBox2D(pcl_util::PCLVisualizerPtr &viewer, BBox2D box2d, int 
     viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, color.GetR(), color.GetG(), color.GetB(), line);
     viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 1, line);
 }
+
+void Render::RenderGroundPlane(pcl_util::PCLVisualizerPtr &viewer, const Eigen::Vector4d plane_coefficients,std::string name, Color color){
+    
+    pcl::ModelCoefficients plane_coeff;
+    plane_coeff.values.resize (4);    // We need 4 values
+    plane_coeff.values[0] = plane_coefficients[0];
+    plane_coeff.values[1] = plane_coefficients[1];
+    plane_coeff.values[2] = plane_coefficients[2];
+    plane_coeff.values[3] = plane_coefficients[3];
+    viewer->addPlane(plane_coeff,5,0,0,name);
+
+    viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_REPRESENTATION, pcl::visualization::PCL_VISUALIZER_REPRESENTATION_WIREFRAME, name);
+    viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, color.GetR(), color.GetG(), color.GetB(), name);
+    viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 1, name);
+
+}

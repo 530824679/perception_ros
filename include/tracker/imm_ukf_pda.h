@@ -27,10 +27,6 @@
 #include <ros/ros.h>
 #include <ros/package.h>
 
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl_conversions/pcl_conversions.h>
 
 #include <tf/transform_listener.h>
 
@@ -81,6 +77,9 @@ private:
  const double CENTROID_DISTANCE = 0.2;//distance to consider centroids the same  如果在这个直径范围内，就不认为是age新目标了，也就不会被追踪，当这个值为0时，
                                       //所有的检测输入都会被追踪
 
+  void transformPoseToGlobal(const perception_ros::DetectedObjectArray& input,
+                             perception_ros::DetectedObjectArray& transformed_input,const tf::StampedTransform& local_to_global);
+  void transformPoseToLocal(perception_ros::DetectedObjectArray& detected_objects_output,const tf::StampedTransform& local_to_global);
 
   geometry_msgs::Pose getTransformedPose(const geometry_msgs::Pose& in_pose,
                                                 const tf::StampedTransform& tf_stamp);
@@ -163,6 +162,8 @@ public:
   bool Init(Json::Value params, std::string key);
   void run(const perception_ros::DetectedObjectArray input,std::vector<InfoTracker> &trackerinfo,
               perception_ros::DetectedObjectArray &detected_objects_output);
+  void run(const perception_ros::DetectedObjectArray input,std::vector<InfoTracker> &trackerinfo,
+              perception_ros::DetectedObjectArray &detected_objects_output,const tf::StampedTransform& local_to_global);
 };
 
 #endif /* OBJECT_TRACKING_IMM_UKF_JPDAF_H */

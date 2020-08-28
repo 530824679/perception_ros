@@ -26,7 +26,7 @@ LidarProcess::LidarProcess(ros::NodeHandle node, std::string config_path){
     filtered_cloud_ground_ptr_.reset(new pcl_util::PointCloud);
 
     // Initialize Subcribers
-    lidar_subscriber_ = node.subscribe("/livox/lidar_1HDDGAU00100091", 100, &LidarProcess::ProcessLidarData, this, ros::TransportHints().reliable().tcpNoDelay(true));
+    lidar_subscriber_ = node.subscribe("/livox_points", 100, &LidarProcess::ProcessLidarData, this, ros::TransportHints().reliable().tcpNoDelay(true));
 
     // Initialize Publishers
     //filtered_cloud_publisher_ = node.advertise<pcl_util::PointCloud>("lidar_filtered", 1);
@@ -135,6 +135,13 @@ bool LidarProcess::Init(std::string &config_path) {
     }
 }
 
+// void LidarProcess::ProcessLocalizationData(const tf::StampedTransform& local_to_global_){
+//     tf::StampedTransform transform;//here need to revised
+    // transform.setOrigin(tf::Vector3(in_pose.position.x, in_pose.position.y, in_pose.position.z));
+    // transform.setRotation(
+    // tf::Quaternion(in_pose.orientation.x, in_pose.orientation.y, in_pose.orientation.z, in_pose.orientation.w));
+// }
+
 void LidarProcess::ProcessLidarData(const pcl_util::PointCloudPtr &in_cloud_ptr) {
     filtered_cloud_ptr_.reset(new pcl_util::PointCloud);
     filtered_cloud_objects_ptr_.reset(new pcl_util::PointCloud);
@@ -170,32 +177,50 @@ void LidarProcess::ProcessPointCloud(const pcl_util::PointCloudPtr &in_cloud_ptr
 
     pcl_util::PointCloudPtr filter_cloud_all_ptr(new pcl_util::PointCloud());
     roi_filter_->Filter(in_cloud_ptr, filter_cloud_all_ptr);
-
-    pcl_util::PointCloudPtr calibrate_cloud_all_ptr(new pcl_util::PointCloud());
-    calibrate_->Correct(filter_cloud_all_ptr, calibrate_cloud_all_ptr);
-
-    std::vector<pcl_util::PointCloud> cluster_cloud_vec;
-    // TMP
-    pcl_util::PointCloudPtr object_cloud_ptr(new pcl_util::PointCloud());
-    cluster_->Process(filter_cloud_all_ptr, cluster_cloud_vec, object_cloud_ptr);
-
-    std::vector<BBox> bboxes;
-    std::vector<BBox2D> bbox2des;
-    //bbox_estimator_->Estimate(cluster_cloud_vec, bboxes,bbox2des);//kf
-    detetcted_object_array_=bbox_estimator_->Estimate(cluster_cloud_vec,input_header_);//ukf
-   
-    std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> fp_ms = end - start;
-    std::cout << "cluster Done! Took " << fp_ms.count() << "ms\n";
     
+    pcl_util::PointCloudPtr out_cloud_ptr(new pcl_util::PointCloud());
+    pcl::VoxelGrid<pcl::PointXYZ> filter;
+    filter.setInputCloud(filter_cloud_all_ptr);
+    filter.setLeafSize(0.5,0.5,0.5);
+    filter.filter(*out_cloud_ptr);
+
+    Eigen::Vector4d plane_coefficients;
     clock_t s,e;
     s=clock();
-    std::vector<InfoTracker> trackerinfo;
-    //tracking_->Process(bboxes, object_array_,trackerinfo); //KF
-    perception_ros::DetectedObjectArray detected_objects_output; //UFK
-    ukf_tracking_->run(detetcted_object_array_,trackerinfo,detected_objects_output);
+    roi_filter_->GroundPlaneFilter(out_cloud_ptr,plane_coefficients);
+    std::cout<<"a:"<<plane_coefficients[0]<<" b:"<<plane_coefficients[1]<<" c:"<<plane_coefficients[2]<<" d:"<<plane_coefficients[3]<<std::endl;
     e=clock();
     std::cout<<"T="<<(1000*double(e-s)/CLOCKS_PER_SEC)<<"ms\n";
+
+    
+    //pcl_util::PointCloudPtr calibrate_cloud_all_ptr(new pcl_util::PointCloud());//here has some bug! when use the rosbag transformed by wenshuang
+    //calibrate_->Correct(filter_cloud_all_ptr, calibrate_cloud_all_ptr);
+
+    // std::vector<pcl_util::PointCloud> cluster_cloud_vec;
+    // // TMP
+    // pcl_util::PointCloudPtr object_cloud_ptr(new pcl_util::PointCloud());
+    // cluster_->Process(filter_cloud_all_ptr, cluster_cloud_vec, object_cloud_ptr);
+
+    // std::vector<BBox> bboxes;
+    // std::vector<BBox2D> bbox2des;
+    // bbox_estimator_->Estimate(cluster_cloud_vec, bboxes,bbox2des);//kf
+    // //detetcted_object_array_=bbox_estimator_->Estimate(cluster_cloud_vec,input_header_);//ukf
+   
+    // std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
+    // std::chrono::duration<double, std::milli> fp_ms = end - start;
+    // std::cout << "cluster Done! Took " << fp_ms.count() << "ms\n";
+    
+    ////****************tracking start***********************//
+    // clock_t s,e;
+    // s=clock();
+    // std::vector<InfoTracker> trackerinfo;
+    // //tracking_->Process(bboxes, object_array_,trackerinfo); //KF
+    // perception_ros::DetectedObjectArray detected_objects_output; 
+    // ukf_tracking_->run(detetcted_object_array_,trackerinfo,detected_objects_output);//UFK
+    // //tf::StampedTransform local_to_global_;//need to revise
+    // //ukf_tracking_->run(detetcted_object_array_,trackerinfo,detected_objects_output,local_to_global_);
+    // e=clock();
+    // std::cout<<"T="<<(1000*double(e-s)/CLOCKS_PER_SEC)<<"ms\n";
 
     
     //visualization_->run(detetcted_object_array_,bounding_box_detected_);
@@ -207,15 +232,17 @@ void LidarProcess::ProcessPointCloud(const pcl_util::PointCloudPtr &in_cloud_ptr
     viewer_->removeAllPointClouds();
     viewer_->removeAllShapes();
 
-    // render_.RenderPointCloud(viewer_, calibrate_cloud_all_ptr, "PointCloud_raw", Color(1,0,0));
+    render_.RenderPointCloud(viewer_, filter_cloud_all_ptr, "PointCloud_raw", Color(1,0,0));
+
+    render_.RenderGroundPlane(viewer_,plane_coefficients,"plane",Color(0,1,0));
 
 
-    for (int i = 0; i < cluster_cloud_vec.size(); ++i) {
-        float random_r = rand() % 10 / (float)10.0;
-        float random_g = rand() % 10 / (float)10.0;
-        float random_b = rand() % 10 / (float)10.0;
-        render_.RenderPointCloud(viewer_, cluster_cloud_vec[i].makeShared(), "PointCloud"+std::to_string(i), Color(random_r,random_g,random_b));
-    }
+    // for (int i = 0; i < cluster_cloud_vec.size(); ++i) {
+    //     float random_r = rand() % 10 / (float)10.0;
+    //     float random_g = rand() % 10 / (float)10.0;
+    //     float random_b = rand() % 10 / (float)10.0;
+    //     render_.RenderPointCloud(viewer_, cluster_cloud_vec[i].makeShared(), "PointCloud"+std::to_string(i), Color(random_r,random_g,random_b));
+    // }
     
     //show detected bbox
     // int clusterid = 0;
@@ -225,12 +252,12 @@ void LidarProcess::ProcessPointCloud(const pcl_util::PointCloudPtr &in_cloud_ptr
     // }
     
     //show tracked results
-    int clusterid = 0;
-    for (size_t i = 0; i < trackerinfo.size(); i++) {
-        //std::cout<<trackerinfo[i].yaw<<std::endl;
-        render_.RenderTrackBBox(viewer_, trackerinfo[i], clusterid, Color(0,1,0));
-        clusterid++;
-    }
+    // int clusterid = 0;
+    // for (size_t i = 0; i < trackerinfo.size(); i++) {
+    //     //std::cout<<trackerinfo[i].yaw<<std::endl;
+    //     render_.RenderTrackBBox(viewer_, trackerinfo[i], clusterid, Color(0,1,0));
+    //     clusterid++;
+    // }
     
     //show the crossline of box
     // int clusterid2d = 0;

@@ -31,6 +31,8 @@ as well as in the event of applications for industrial property rights.
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl_ros/publisher.h>
 #include <pcl_ros/point_cloud.h>
+#include <pcl/filters/extract_indices.h>
+#include <pcl/filters/voxel_grid.h>
 
 #include <pcl/sample_consensus/ransac.h>
 #include <pcl/sample_consensus/sac_model_plane.h>
@@ -93,6 +95,7 @@ public:
     bool Init(std::string &config_path);
 
     void ProcessLidarData(const pcl_util::PointCloudPtr &in_cloud_ptr);
+    void ProcessLocalizationData(const tf::StampedTransform& local_to_global_);
 
 private:
     void ProcessPointCloud(const pcl_util::PointCloudPtr &in_cloud_ptr);
@@ -113,6 +116,10 @@ private:
     pcl_util::PointCloudPtr filtered_cloud_objects_ptr_;
     pcl_util::PointCloudPtr filtered_cloud_ground_ptr_;
 
+    //get the local to global coordinate
+    
+    //tf::StampedTransform local_to_global_;
+
     // Markers for visualization
     visualization_msgs::Marker bbox_list_;
     visualization_msgs::MarkerArray velocity_list_;
@@ -122,7 +129,7 @@ private:
 
     // Subscriber
     ros::Subscriber lidar_subscriber_;
-
+    ros::Subscriber localization_;
     // Data publisher
     ros::Publisher filtered_cloud_publisher_;
     ros::Publisher filtered_cloud_ground_publisher_;

@@ -26,6 +26,8 @@ as well as in the event of applications for industrial property rights.
 #include "common/pcl_types.h"
 #include "common/logging.h"
 
+#include <unordered_set>
+
 extern Logging logger;
 
 class ROIFilter {
@@ -37,6 +39,9 @@ public:
 
     bool Filter(const pcl_util::PointCloudPtr &in_cloud_ptr, pcl_util::PointCloudPtr &filtered_cloud_all_ptr);
     void FilterROI(const pcl_util::PointCloudPtr &in_cloud_ptr);
+    bool GroundPlaneFilter(pcl_util::PointCloudPtr input_cloud,Eigen::Vector4d &plane_coefficients);
+    float Distance(pcl_util::Point& pt1, pcl_util::Point& pt2);
+    bool CollineationJudge(pcl_util::Point& pt1, pcl_util::Point& pt2, pcl_util::Point& pt3);
 
 private:
     float roi_x_min_;
@@ -47,6 +52,7 @@ private:
     float roi_z_max_;
 
     pcl_util::PointCloudPtr filtered_cloud_all_ptr_;
+    Eigen::Vector4d plane_coefficients;
 
 
 };

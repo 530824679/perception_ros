@@ -87,3 +87,107 @@ void ROIFilter::FilterROI(const pcl_util::PointCloudPtr &in_cloud_ptr){
     return;
 }
 
+bool ROIFilter::GroundPlaneFilter(pcl_util::PointCloudPtr input_cloud,Eigen::Vector4d &plane_coefficients){
+        
+
+        pcl_util::PointCloud cloud=*input_cloud;//0.3ms
+        int points_num = cloud.size();
+        std::cout<<"points cloud"<<points_num<<std::endl;
+        int max_iterations_=500;
+        
+        std::unordered_set<int> inliers_result;
+  
+        while (max_iterations_){
+            std::unordered_set<int> inliers;
+            //Eigen::Vector4d coefficient;
+
+            while(inliers.size() < 3){
+                inliers.insert(rand()%points_num);
+            }
+
+            pcl_util::Point pt1, pt2, pt3;
+            auto iter = inliers.begin();
+            pt1.x = cloud[*iter].x;
+            pt1.y = cloud[*iter].y;
+            pt1.z = cloud[*iter].z;
+            iter++;
+            pt2.x = cloud[*iter].x;
+            pt2.y = cloud[*iter].y;
+            pt2.z = cloud[*iter].z;
+            iter++;
+            pt3.x = cloud[*iter].x;
+            pt3.y = cloud[*iter].y;
+            pt3.z = cloud[*iter].z;
+
+            if(CollineationJudge(pt1, pt2, pt3))
+                continue;
+
+            float a, b, c, d, sqrt_abc;
+            a = (pt2.y - pt1.y) * (pt3.z - pt1.z) - (pt2.z - pt1.z) * (pt3.y - pt1.y);
+            b = (pt2.z - pt1.z) * (pt3.x - pt1.x) - (pt2.x - pt1.x) * (pt3.z - pt1.z);
+            c = (pt2.x - pt1.x) * (pt3.y - pt1.y) - (pt2.y - pt1.y) * (pt3.x - pt1.x);
+            d = -(a * pt1.x + b * pt1.y + c * pt1.z);
+            sqrt_abc = sqrt(a * a + b * b + c * c);
+
+            
+
+            for (int index = 0; index < points_num; index++)
+            {
+                if (inliers.count(index) > 0)
+                {
+                    continue;
+                }
+
+                pcl_util::Point point = cloud[index];
+                float x = point.x;
+                float y = point.y;
+                float z = point.z;
+                float dist = fabs(a * x + b * y + c * z + d) / sqrt_abc;
+
+
+                if(dist < 0.05)
+                {
+                    inliers.insert(index);
+                }
+
+                if(inliers.size() > inliers_result.size())
+                {
+                    inliers_result.swap(inliers);
+                    plane_coefficients << a, b, c, d;
+                }
+
+            }
+
+            max_iterations_--;
+        }
+
+
+        return true;
+}
+
+
+float ROIFilter::Distance(pcl_util::Point& pt1, pcl_util::Point& pt2)
+{
+    float x = pt1.x - pt2.x;
+    float y = pt1.y - pt2.y;
+    float z = pt1.z - pt2.z;
+    return sqrt(x*x + y*y + z*z);
+}
+
+bool ROIFilter::CollineationJudge(pcl_util::Point& pt1, pcl_util::Point& pt2, pcl_util::Point& pt3)
+{
+    float edge_a = Distance(pt1, pt2);
+    float edge_b = Distance(pt2, pt3);
+    float edge_c = Distance(pt1, pt3);
+
+    float p = 0.5 * (edge_a + edge_b + edge_c);
+    float area = p * (p - edge_a) * (p - edge_b) * (p - edge_c);
+
+    if(abs(area) < 1e-6)
+        return true;
+    else
+        return false;
+}
+
+
+

@@ -39,6 +39,7 @@ public:
     void RenderTrackBBox(pcl_util::PCLVisualizerPtr &viewer, InfoTracker trackerinfo, int id, Color color);
     void RenderUkfTrackBBox(pcl_util::PCLVisualizerPtr &viewer, perception_ros::DetectedObjectArray trackerinfo, int id, Color color);
     void RenderBBox2D(pcl_util::PCLVisualizerPtr &viewer, BBox2D box2d, int id, Color color);
+    void RenderGroundPlane(pcl_util::PCLVisualizerPtr &viewer, Eigen::Vector4d plane_coefficients,std::string name,Color color);
 };
 
 
